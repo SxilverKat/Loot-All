@@ -1,5 +1,8 @@
 # Loot All
 
+<img width="768" height="456" alt="Loot All Banner" src="https://github.com/user-attachments/assets/75fb9464-ed5a-4dd9-8ec0-dffa9be2454f" />
+
+
 Loot All allows you to loot all nearby containers around you with a single button.
 
 By pressing the keybind (default `-`) all nearby loot containers are instantly emptied into your inventory or storage system.
