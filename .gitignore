@@ -1,0 +1,34 @@
+# eclipse
+bin
+*.launch
+.settings
+.metadata
+.classpath
+.project
+
+# idea
+out
+*.ipr
+*.iws
+*.iml
+.idea
+
+# gradle
+build
+.gradle
+
+# other
+eclipse
+run
+run-data
+mcmodsrepo
+
+# Files from Forge MDK
+forge*changelog.txt
+
+# Third-party mod jars used as compile-only dependencies (do not redistribute)
+libs/
+
+# Editor / assistant tooling
+CLAUDE.md
+.claude/
