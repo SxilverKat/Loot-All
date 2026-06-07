@@ -1,0 +1,16 @@
+[
+{
+  "modid": "lootall",
+  "name": "Loot All",
+  "description": "Looting made easy.",
+  "version": "${version}",
+  "mcversion": "${mcversion}",
+  "url": "https://www.curseforge.com/minecraft/mc-mods/loot-all",
+  "updateUrl": "",
+  "authorList": ["Sxilverr"],
+  "credits": "",
+  "logoFile": "icon.png",
+  "screenshots": [],
+  "dependencies": []
+}
+]

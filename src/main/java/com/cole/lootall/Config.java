@@ -1,178 +1,119 @@
 package com.cole.lootall;
 
 import com.cole.lootall.server.LootFilter;
-import net.minecraftforge.common.ForgeConfigSpec;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.ModList;
-import net.minecraftforge.fml.common.Mod;
-import net.minecraftforge.fml.event.config.ModConfigEvent;
+import net.minecraftforge.common.config.Configuration;
+import net.minecraftforge.fml.common.Loader;
 
-import java.util.List;
+import java.io.File;
 
-@Mod.EventBusSubscriber(modid = LootAll.MODID, bus = Mod.EventBusSubscriber.Bus.MOD)
-public class Config {
-    private static final ForgeConfigSpec.Builder BUILDER = new ForgeConfigSpec.Builder();
-    private static final boolean GAMESTAGES = ModList.get().isLoaded("gamestages");
-
-    private static final ForgeConfigSpec.IntValue RANGE = BUILDER
-            .comment("Radius in blocks to search for loot containers")
-            .defineInRange("range", 20, 1, 5000);
-
-    private static final ForgeConfigSpec.BooleanValue INCLUDE_MINECARTS = BUILDER
-            .comment("Loot nearby minecarts that have a loot table")
-            .define("includeMinecarts", true);
-
-    private static final ForgeConfigSpec.BooleanValue FEEDBACK_MESSAGE = BUILDER
-            .comment("Show an action bar message after looting")
-            .define("feedbackMessage", true);
-
-    private static final ForgeConfigSpec.BooleanValue PLAY_SOUND = BUILDER
-            .comment("Play a pickup sound after looting")
-            .define("playSound", true);
-
-    private static final ForgeConfigSpec.BooleanValue EXCLUDE_BLOCKED = BUILDER
-            .comment("Exclude blocked containers: skip chests that cannot be opened (A block on top)")
-            .define("excludeBlockedContainers", false);
-
-    private static final ForgeConfigSpec.BooleanValue AUTO_LOOTING = BUILDER
-            .comment("Automatically loot nearby containers on a timer, without pressing the key")
-            .define("autoLooting", false);
-
-    private static final ForgeConfigSpec.IntValue AUTO_LOOTING_TIMER = BUILDER
-            .comment("How often auto looting runs, in seconds")
-            .defineInRange("autoLootingTimer", 20, 1, 3600);
-
-    private static final ForgeConfigSpec.BooleanValue ENABLE_TRANSFER = BUILDER
-            .comment("Enable the loot transfer system.")
-            .define("enableLootingTransfer", true);
-
-    private static final ForgeConfigSpec.IntValue MAX_TRANSFER_DISTANCE = BUILDER
-            .comment("Maximum distance in blocks to a transfer target; 0 = unlimited. Only applies when the target is in the same dimension as the player.")
-            .defineInRange("maxLootTransferDistance", 0, 0, 100000);
-
-    private static final ForgeConfigSpec.BooleanValue TRANSFER_SAME_DIMENSION = BUILDER
-            .comment("Require the transfer target to be in the same dimension as the player")
-            .define("transferRequireSameDimension", false);
-
-    private static final ForgeConfigSpec.BooleanValue TRANSFER_LOADED_CHUNK = BUILDER
-            .comment("Require the transfer target's chunk to already be loaded. If false, the chunk is briefly loaded to receive items.")
-            .define("transferRequireLoadedChunk", false);
-
+public final class Config {
     public enum RarityMode { OFF, ONLY, SKIP }
 
-    private static final ForgeConfigSpec.ConfigValue<List<? extends String>> SKIP_LIST;
-    private static final ForgeConfigSpec.BooleanValue SKIP_ARMOR_AND_TOOLS;
-    private static final ForgeConfigSpec.BooleanValue SKIP_NON_STACKABLE;
-    private static final ForgeConfigSpec.BooleanValue SKIP_UNENCHANTED_GEAR;
-    private static final ForgeConfigSpec.EnumValue<RarityMode> RARITY_MODE;
-    private static final ForgeConfigSpec.ConfigValue<List<? extends String>> RARITY_LIST;
+    private static final String CATEGORY_FILTERS = "item_filters";
+    private static final String CATEGORY_STAGES = "game_stages";
 
-    static {
-        BUILDER.comment("Filter which items get looted. Skipped items are left in the container.")
-                .push("Item Filters");
-        SKIP_LIST = BUILDER
-                .comment("Items to never loot.",
-                        "Formats: 'modid:item', '#modid:tag', '@modid'")
-                .defineListAllowEmpty(List.of("skipList"), () -> List.of(), Config::isValidListEntry);
-        SKIP_ARMOR_AND_TOOLS = BUILDER
-                .comment("Skip all armor, tools, and weapons.")
-                .define("skipArmorAndTools", false);
-        SKIP_NON_STACKABLE = BUILDER
-                .comment("Skip all items that only stack to 1.")
-                .define("skipNonStackable", false);
-        SKIP_UNENCHANTED_GEAR = BUILDER
-                .comment("Skip armor, tools, and weapons UNLESS they are enchanted.")
-                .define("skipUnenchantedGear", false);
-        RARITY_MODE = BUILDER
-                .comment("Rarity filter mode:",
-                        "  OFF  = no rarity filtering.",
-                        "  ONLY = loot ONLY the tiers listed in rarityList.",
-                        "  SKIP = loot everything EXCEPT the tiers listed in rarityList.")
-                .defineEnum("rarityFilterMode", RarityMode.OFF);
-        RARITY_LIST = BUILDER
-                .comment("Rarity tiers for the filter. Vanilla: COMMON, UNCOMMON, RARE, EPIC.",
-                        "Note: enchanting an item raises its rarity in vanilla.")
-                .defineListAllowEmpty(List.of("rarityList"), () -> List.of(), Config::isValidListEntry);
-        BUILDER.pop();
+    private static Configuration config;
+    private static final boolean GAMESTAGES = Loader.isModLoaded("gamestages");
+
+    public static int range = 20;
+    public static boolean includeMinecarts = true;
+    public static boolean feedbackMessage = true;
+    public static boolean playSound = true;
+    public static boolean excludeBlockedContainers = false;
+    public static boolean autoLooting = false;
+    public static int autoLootingTimer = 20;
+    public static boolean enableLootingTransfer = true;
+    public static int maxLootTransferDistance = 0;
+    public static boolean transferRequireSameDimension = false;
+    public static boolean transferRequireLoadedChunk = false;
+    public static boolean skipArmorAndTools = false;
+    public static boolean skipNonStackable = false;
+    public static boolean skipUnenchantedGear = false;
+    public static RarityMode rarityMode = RarityMode.OFF;
+    public static String lootAllRequiredStage = "";
+    public static String autoLootRequiredStage = "";
+    public static String transferRequiredStage = "";
+    public static String[] skipList = new String[0];
+    public static String[] rarityList = new String[0];
+
+    private Config() {
     }
 
-    private static boolean isValidListEntry(Object o) {
-        return o instanceof String s && !s.isBlank();
+    public static void init(File file) {
+        config = new Configuration(file);
+        load();
     }
 
-    // Defined only when Game Stages is installed, grouped under a "Game Stages" category.
-    private static final ForgeConfigSpec.ConfigValue<String> LOOT_ALL_STAGE;
-    private static final ForgeConfigSpec.ConfigValue<String> AUTO_LOOT_STAGE;
-    private static final ForgeConfigSpec.ConfigValue<String> TRANSFER_STAGE;
+    public static Configuration getConfig() {
+        return config;
+    }
 
-    static {
+    public static void load() {
+        range = config.getInt("range", Configuration.CATEGORY_GENERAL, 20, 1, 5000,
+                "Radius in blocks to search for loot containers");
+        includeMinecarts = config.getBoolean("includeMinecarts", Configuration.CATEGORY_GENERAL, true,
+                "Loot nearby minecarts that have a loot table");
+        feedbackMessage = config.getBoolean("feedbackMessage", Configuration.CATEGORY_GENERAL, true,
+                "Show an action bar message after looting");
+        playSound = config.getBoolean("playSound", Configuration.CATEGORY_GENERAL, true,
+                "Play a pickup sound after looting");
+        excludeBlockedContainers = config.getBoolean("excludeBlockedContainers", Configuration.CATEGORY_GENERAL, false,
+                "Exclude blocked containers: skip chests that cannot be opened (a block on top)");
+        autoLooting = config.getBoolean("autoLooting", Configuration.CATEGORY_GENERAL, false,
+                "Automatically loot nearby containers on a timer, without pressing the key");
+        autoLootingTimer = config.getInt("autoLootingTimer", Configuration.CATEGORY_GENERAL, 20, 1, 3600,
+                "How often auto looting runs, in seconds");
+        enableLootingTransfer = config.getBoolean("enableLootingTransfer", Configuration.CATEGORY_GENERAL, true,
+                "Enable the loot transfer system.");
+        maxLootTransferDistance = config.getInt("maxLootTransferDistance", Configuration.CATEGORY_GENERAL, 0, 0, 100000,
+                "Maximum distance in blocks to a transfer target; 0 = unlimited. Only applies when the target is in the same dimension as the player.");
+        transferRequireSameDimension = config.getBoolean("transferRequireSameDimension", Configuration.CATEGORY_GENERAL, false,
+                "Require the transfer target to be in the same dimension as the player");
+        transferRequireLoadedChunk = config.getBoolean("transferRequireLoadedChunk", Configuration.CATEGORY_GENERAL, false,
+                "Require the transfer target's chunk to already be loaded. If false, the chunk is briefly loaded to receive items.");
+
+        config.setCategoryComment(CATEGORY_FILTERS,
+                "Filter which items get looted. Skipped items are left in the container.");
+        skipList = config.getStringList("skipList", CATEGORY_FILTERS, new String[0],
+                "Items to never loot. Formats: 'modid:item', '#oreDictName', '@modid'");
+        skipArmorAndTools = config.getBoolean("skipArmorAndTools", CATEGORY_FILTERS, false,
+                "Skip all armor, tools, and weapons.");
+        skipNonStackable = config.getBoolean("skipNonStackable", CATEGORY_FILTERS, false,
+                "Skip all items that only stack to 1.");
+        skipUnenchantedGear = config.getBoolean("skipUnenchantedGear", CATEGORY_FILTERS, false,
+                "Skip armor, tools, and weapons UNLESS they are enchanted.");
+        String mode = config.getString("rarityFilterMode", CATEGORY_FILTERS, "OFF",
+                "Rarity filter mode:\n  OFF  = no rarity filtering.\n  ONLY = loot ONLY the tiers listed in rarityList.\n  SKIP = loot everything EXCEPT the tiers listed in rarityList.",
+                new String[] {"OFF", "ONLY", "SKIP"});
+        rarityMode = parseRarityMode(mode);
+        rarityList = config.getStringList("rarityList", CATEGORY_FILTERS, new String[0],
+                "Rarity tiers for the filter. Vanilla: COMMON, UNCOMMON, RARE, EPIC.\nNote: enchanting an item raises its rarity in vanilla.");
+
         if (GAMESTAGES) {
-            BUILDER.comment("Restrict Loot All abilities behind Game Stages.")
-                    .push("Game Stages");
-            LOOT_ALL_STAGE = BUILDER
-                    .comment("Stage a player must have to use the Loot All key.")
-                    .define("lootAllRequiredStage", "");
-            AUTO_LOOT_STAGE = BUILDER
-                    .comment("Stage a player must have for auto-looting to run for them.")
-                    .define("autoLootRequiredStage", "");
-            TRANSFER_STAGE = BUILDER
-                    .comment("Stage a player must have to use the Loot Transfer system.")
-                    .define("transferRequiredStage", "");
-            BUILDER.pop();
-        } else {
-            LOOT_ALL_STAGE = null;
-            AUTO_LOOT_STAGE = null;
-            TRANSFER_STAGE = null;
+            config.setCategoryComment(CATEGORY_STAGES, "Restrict Loot All abilities behind Game Stages.");
+            lootAllRequiredStage = config.getString("lootAllRequiredStage", CATEGORY_STAGES, "",
+                    "Stage a player must have to use the Loot All key.");
+            autoLootRequiredStage = config.getString("autoLootRequiredStage", CATEGORY_STAGES, "",
+                    "Stage a player must have for auto-looting to run for them.");
+            transferRequiredStage = config.getString("transferRequiredStage", CATEGORY_STAGES, "",
+                    "Stage a player must have to use the Loot Transfer system.");
+        }
+
+        if (config.hasChanged()) {
+            config.save();
+        }
+        LootFilter.rebuild(skipList, rarityList);
+    }
+
+    private static RarityMode parseRarityMode(String value) {
+        try {
+            return RarityMode.valueOf(value.trim().toUpperCase(java.util.Locale.ROOT));
+        } catch (IllegalArgumentException e) {
+            return RarityMode.OFF;
         }
     }
-
-    static final ForgeConfigSpec SPEC = BUILDER.build();
-
-    public static int range;
-    public static boolean includeMinecarts;
-    public static boolean feedbackMessage;
-    public static boolean playSound;
-    public static boolean excludeBlockedContainers;
-    public static boolean autoLooting;
-    public static int autoLootingTimer;
-    public static boolean enableLootingTransfer;
-    public static int maxLootTransferDistance;
-    public static boolean transferRequireSameDimension;
-    public static boolean transferRequireLoadedChunk;
-    public static boolean skipArmorAndTools;
-    public static boolean skipNonStackable;
-    public static boolean skipUnenchantedGear;
-    public static RarityMode rarityMode = RarityMode.OFF;
-    public static String lootAllRequiredStage;
-    public static String autoLootRequiredStage;
-    public static String transferRequiredStage;
 
     public static boolean transferEnabledForRegistration() {
-        return !SPEC.isLoaded() || ENABLE_TRANSFER.get();
-    }
-
-    @SubscribeEvent
-    static void onLoad(final ModConfigEvent event) {
-        range = RANGE.get();
-        includeMinecarts = INCLUDE_MINECARTS.get();
-        feedbackMessage = FEEDBACK_MESSAGE.get();
-        playSound = PLAY_SOUND.get();
-        excludeBlockedContainers = EXCLUDE_BLOCKED.get();
-        autoLooting = AUTO_LOOTING.get();
-        autoLootingTimer = AUTO_LOOTING_TIMER.get();
-        enableLootingTransfer = ENABLE_TRANSFER.get();
-        maxLootTransferDistance = MAX_TRANSFER_DISTANCE.get();
-        transferRequireSameDimension = TRANSFER_SAME_DIMENSION.get();
-        transferRequireLoadedChunk = TRANSFER_LOADED_CHUNK.get();
-        skipArmorAndTools = SKIP_ARMOR_AND_TOOLS.get();
-        skipNonStackable = SKIP_NON_STACKABLE.get();
-        skipUnenchantedGear = SKIP_UNENCHANTED_GEAR.get();
-        rarityMode = RARITY_MODE.get();
-        LootFilter.rebuild(SKIP_LIST.get(), RARITY_LIST.get());
-        if (GAMESTAGES) {
-            lootAllRequiredStage = LOOT_ALL_STAGE.get();
-            autoLootRequiredStage = AUTO_LOOT_STAGE.get();
-            transferRequiredStage = TRANSFER_STAGE.get();
-        }
+        return enableLootingTransfer;
     }
 }

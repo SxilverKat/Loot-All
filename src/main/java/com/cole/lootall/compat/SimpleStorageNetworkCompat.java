@@ -1,69 +1,104 @@
 package com.cole.lootall.compat;
 
 import com.cole.lootall.server.TransferService;
-import com.lothrazar.storagenetwork.api.DimPos;
-import com.lothrazar.storagenetwork.block.TileConnectable;
-import com.lothrazar.storagenetwork.block.main.TileMain;
-import net.minecraft.core.BlockPos;
-import net.minecraft.server.level.ServerLevel;
-import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.item.ItemStack;
+import net.minecraft.tileentity.TileEntity;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.world.World;
 
-/**
- * Simple Storage Network (Lothrazar, mod id "storagenetwork") loot-transfer support.
- *
- * <p>Items live in inventories joined to the network by Storage Link cables; the central
- * {@code TileMain} (Storage Network Master) distributes inserts across them. Access blocks
- * (Request Table, cables, etc.) extend {@code TileConnectable} and expose the master's position
- * via {@link TileConnectable#getMain()}. So binding to ANY network block resolves the master and
- * inserts network-wide:
- * <ul>
- *   <li>target is the Master itself → use it directly;</li>
- *   <li>target is a Request Table / any connectable → {@code getMain()} → resolve the master.</li>
- * </ul>
- *
- * <p>{@code TileMain.insertStack(stack, simulate)} returns the count that could NOT be stored
- * (remainder count, bytecode-verified — it returns the leftover stack's size), so remainder
- * count maps straight to the {@link TransferService.LootSink} contract.
- */
-public class SimpleStorageNetworkCompat {
+import java.lang.reflect.Method;
 
-    public static TransferService.LootSink blockSink(ServerLevel level, BlockPos pos) {
-        TileMain master = resolveMaster(level, pos);
-        if (master == null) {
-            return null;
-        }
-        return stack -> {
-            try {
-                int count = stack.getCount();
-                int remaining = master.insertStack(stack.copy(), false);
-                if (remaining >= count) {
-                    return stack;
-                }
-                if (remaining <= 0) {
-                    return ItemStack.EMPTY;
-                }
-                ItemStack rem = stack.copy();
-                rem.setCount(remaining);
-                return rem;
-            } catch (Exception e) {
-                return stack;
-            }
-        };
+public final class SimpleStorageNetworkCompat {
+    private static boolean failed;
+    private static boolean init;
+    private static Class<?> cINetworkMaster;
+    private static Class<?> cIConnectable;
+    private static Method mInsertStack;
+    private static Method mGetMasterPos;
+    private static Method mDimGetWorld;
+    private static Method mDimGetBlockPos;
+
+    private SimpleStorageNetworkCompat() {
     }
 
-    private static TileMain resolveMaster(ServerLevel level, BlockPos pos) {
-        BlockEntity be = level.getBlockEntity(pos);
-        if (be instanceof TileMain master) {
-            return master;
+    private static boolean ensureInit() {
+        if (failed) {
+            return false;
         }
-        if (be instanceof TileConnectable connectable) {
-            DimPos mainPos = connectable.getMain();
-            if (mainPos != null) {
-                try {
-                    return mainPos.getTileEntity(TileMain.class, level);
-                } catch (Exception ignored) {
+        if (init) {
+            return true;
+        }
+        try {
+            cINetworkMaster = Class.forName("mrriegel.storagenetwork.api.network.INetworkMaster");
+            mInsertStack = cINetworkMaster.getMethod("insertStack", ItemStack.class, boolean.class);
+            cIConnectable = Class.forName("mrriegel.storagenetwork.api.capability.IConnectable");
+            mGetMasterPos = cIConnectable.getMethod("getMasterPos");
+            Class<?> cDimPos = Class.forName("mrriegel.storagenetwork.api.data.DimPos");
+            mDimGetWorld = cDimPos.getMethod("getWorld");
+            mDimGetBlockPos = cDimPos.getMethod("getBlockPos");
+            init = true;
+            return true;
+        } catch (Throwable t) {
+            failed = true;
+            return false;
+        }
+    }
+
+    public static TransferService.LootSink blockSink(World level, BlockPos pos) {
+        if (!ensureInit()) {
+            return null;
+        }
+        try {
+            final Object master = resolveMaster(level, pos);
+            if (master == null) {
+                return null;
+            }
+            return new TransferService.LootSink() {
+                @Override
+                public ItemStack insert(ItemStack stack) {
+                    try {
+                        int count = stack.getCount();
+                        int leftover = (Integer) mInsertStack.invoke(master, stack.copy(), false);
+                        if (leftover >= count) {
+                            return stack;
+                        }
+                        if (leftover <= 0) {
+                            return ItemStack.EMPTY;
+                        }
+                        ItemStack remainder = stack.copy();
+                        remainder.setCount(leftover);
+                        return remainder;
+                    } catch (Throwable t) {
+                        return stack;
+                    }
                 }
+            };
+        } catch (Throwable t) {
+            return null;
+        }
+    }
+
+    private static Object resolveMaster(World level, BlockPos pos) throws Exception {
+        TileEntity te = level.getTileEntity(pos);
+        if (te == null) {
+            return null;
+        }
+        if (cINetworkMaster.isInstance(te)) {
+            return te;
+        }
+        if (cIConnectable.isInstance(te)) {
+            Object dimPos = mGetMasterPos.invoke(te);
+            if (dimPos == null) {
+                return null;
+            }
+            World masterWorld = (World) mDimGetWorld.invoke(dimPos);
+            BlockPos masterPos = (BlockPos) mDimGetBlockPos.invoke(dimPos);
+            if (masterWorld == null || masterPos == null) {
+                return null;
+            }
+            TileEntity masterTe = masterWorld.getTileEntity(masterPos);
+            if (masterTe != null && cINetworkMaster.isInstance(masterTe)) {
+                return masterTe;
             }
         }
         return null;

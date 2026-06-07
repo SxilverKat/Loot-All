@@ -1,0 +1,17 @@
+key.categories.lootall=Loot All
+key.lootall.loot_all=Loot Nearby Containers
+key.lootall.set_transfer_target=Set Transfer Target
+message.lootall.looted=Looted %1$s %2$s from %3$s %4$s
+message.lootall.item=item
+message.lootall.items=items
+message.lootall.container=container
+message.lootall.containers=containers
+message.lootall.nothing=No loot containers nearby
+message.lootall.transferred=Transferred to %1$s
+message.lootall.target_set=Transfer target set: %1$s (%2$s, %3$s, %4$s)
+message.lootall.target_set_item=Transfer target set: %1$s
+message.lootall.target_cleared=Transfer target cleared
+message.lootall.target_invalid=That block can't receive items
+message.lootall.item_target_invalid=That item can't store loot
+message.lootall.no_stage=You haven't unlocked this ability yet
+name.lootall.me_network=ME Network

@@ -1,95 +1,120 @@
 package com.cole.lootall.server;
 
-import net.minecraft.core.BlockPos;
-import net.minecraft.core.registries.Registries;
-import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.ListTag;
-import net.minecraft.nbt.Tag;
-import net.minecraft.resources.ResourceKey;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.nbt.NBTTagCompound;
+import net.minecraft.nbt.NBTTagList;
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.world.level.Level;
-import net.minecraft.world.level.saveddata.SavedData;
+import net.minecraft.util.ResourceLocation;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.world.WorldServer;
+import net.minecraft.world.storage.MapStorage;
+import net.minecraft.world.storage.WorldSavedData;
 
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
-public class TransferData extends SavedData {
+public class TransferData extends WorldSavedData {
     private static final String NAME = "lootall_transfer";
 
-    public interface Target {
+    public static final class Target {
+        public final boolean isItem;
+        public final int dimension;
+        public final BlockPos pos;
+        public final ResourceLocation item;
+
+        private Target(boolean isItem, int dimension, BlockPos pos, ResourceLocation item) {
+            this.isItem = isItem;
+            this.dimension = dimension;
+            this.pos = pos;
+            this.item = item;
+        }
+
+        public static Target block(int dimension, BlockPos pos) {
+            return new Target(false, dimension, pos, null);
+        }
+
+        public static Target item(ResourceLocation item) {
+            return new Target(true, 0, null, item);
+        }
     }
 
-    public record BlockTarget(ResourceKey<Level> dimension, BlockPos pos) implements Target {
+    private final Map<UUID, Target> targets = new HashMap<UUID, Target>();
+
+    public TransferData() {
+        super(NAME);
     }
 
-    public record ItemTarget(ResourceLocation item) implements Target {
+    public TransferData(String name) {
+        super(name);
     }
-
-    private final Map<UUID, Target> targets = new HashMap<>();
 
     public static TransferData get(MinecraftServer server) {
-        return server.overworld().getDataStorage().computeIfAbsent(TransferData::load, TransferData::new, NAME);
+        WorldServer overworld = server.getWorld(0);
+        MapStorage storage = overworld.getMapStorage();
+        TransferData data = (TransferData) storage.getOrLoadData(TransferData.class, NAME);
+        if (data == null) {
+            data = new TransferData();
+            storage.setData(NAME, data);
+        }
+        return data;
     }
 
     public Target getTarget(UUID player) {
         return targets.get(player);
     }
 
-    public void setBlockTarget(UUID player, ResourceKey<Level> dimension, BlockPos pos) {
-        targets.put(player, new BlockTarget(dimension, pos));
-        setDirty();
+    public void setBlockTarget(UUID player, int dimension, BlockPos pos) {
+        targets.put(player, Target.block(dimension, pos));
+        markDirty();
     }
 
     public void setItemTarget(UUID player, ResourceLocation item) {
-        targets.put(player, new ItemTarget(item));
-        setDirty();
+        targets.put(player, Target.item(item));
+        markDirty();
     }
 
     public void clear(UUID player) {
         if (targets.remove(player) != null) {
-            setDirty();
+            markDirty();
         }
-    }
-
-    public static TransferData load(CompoundTag tag) {
-        TransferData data = new TransferData();
-        ListTag list = tag.getList("targets", Tag.TAG_COMPOUND);
-        for (int i = 0; i < list.size(); i++) {
-            CompoundTag entry = list.getCompound(i);
-            UUID player = entry.getUUID("player");
-            if ("item".equals(entry.getString("type"))) {
-                data.targets.put(player, new ItemTarget(new ResourceLocation(entry.getString("item"))));
-            } else {
-                ResourceKey<Level> dimension = ResourceKey.create(
-                        Registries.DIMENSION, new ResourceLocation(entry.getString("dimension")));
-                BlockPos pos = new BlockPos(entry.getInt("x"), entry.getInt("y"), entry.getInt("z"));
-                data.targets.put(player, new BlockTarget(dimension, pos));
-            }
-        }
-        return data;
     }
 
     @Override
-    public CompoundTag save(CompoundTag tag) {
-        ListTag list = new ListTag();
-        targets.forEach((player, target) -> {
-            CompoundTag entry = new CompoundTag();
-            entry.putUUID("player", player);
-            if (target instanceof ItemTarget item) {
-                entry.putString("type", "item");
-                entry.putString("item", item.item().toString());
-            } else if (target instanceof BlockTarget block) {
-                entry.putString("type", "block");
-                entry.putString("dimension", block.dimension().location().toString());
-                entry.putInt("x", block.pos().getX());
-                entry.putInt("y", block.pos().getY());
-                entry.putInt("z", block.pos().getZ());
+    public void readFromNBT(NBTTagCompound nbt) {
+        targets.clear();
+        NBTTagList list = nbt.getTagList("targets", 10);
+        for (int i = 0; i < list.tagCount(); i++) {
+            NBTTagCompound entry = list.getCompoundTagAt(i);
+            UUID player = entry.getUniqueId("player");
+            if ("item".equals(entry.getString("type"))) {
+                targets.put(player, Target.item(new ResourceLocation(entry.getString("item"))));
+            } else {
+                BlockPos pos = new BlockPos(entry.getInteger("x"), entry.getInteger("y"), entry.getInteger("z"));
+                targets.put(player, Target.block(entry.getInteger("dimension"), pos));
             }
-            list.add(entry);
-        });
-        tag.put("targets", list);
-        return tag;
+        }
+    }
+
+    @Override
+    public NBTTagCompound writeToNBT(NBTTagCompound nbt) {
+        NBTTagList list = new NBTTagList();
+        for (Map.Entry<UUID, Target> mapEntry : targets.entrySet()) {
+            NBTTagCompound entry = new NBTTagCompound();
+            entry.setUniqueId("player", mapEntry.getKey());
+            Target target = mapEntry.getValue();
+            if (target.isItem) {
+                entry.setString("type", "item");
+                entry.setString("item", target.item.toString());
+            } else {
+                entry.setString("type", "block");
+                entry.setInteger("dimension", target.dimension);
+                entry.setInteger("x", target.pos.getX());
+                entry.setInteger("y", target.pos.getY());
+                entry.setInteger("z", target.pos.getZ());
+            }
+            list.appendTag(entry);
+        }
+        nbt.setTag("targets", list);
+        return nbt;
     }
 }

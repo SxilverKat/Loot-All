@@ -1,40 +1,38 @@
 package com.cole.lootall.server;
 
 import com.cole.lootall.Config;
-import net.minecraft.core.registries.Registries;
-import net.minecraft.resources.ResourceLocation;
-import net.minecraft.tags.TagKey;
-import net.minecraft.world.item.ArmorItem;
-import net.minecraft.world.item.BowItem;
-import net.minecraft.world.item.CrossbowItem;
-import net.minecraft.world.item.ElytraItem;
-import net.minecraft.world.item.FishingRodItem;
-import net.minecraft.world.item.Item;
-import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.ShearsItem;
-import net.minecraft.world.item.ShieldItem;
-import net.minecraft.world.item.TieredItem;
-import net.minecraft.world.item.TridentItem;
-import net.minecraftforge.registries.ForgeRegistries;
+import net.minecraft.item.Item;
+import net.minecraft.item.ItemArmor;
+import net.minecraft.item.ItemBow;
+import net.minecraft.item.ItemElytra;
+import net.minecraft.item.ItemFishingRod;
+import net.minecraft.item.ItemHoe;
+import net.minecraft.item.ItemShears;
+import net.minecraft.item.ItemShield;
+import net.minecraft.item.ItemStack;
+import net.minecraft.item.ItemSword;
+import net.minecraft.item.ItemTool;
+import net.minecraft.util.ResourceLocation;
+import net.minecraftforge.fml.common.registry.ForgeRegistries;
+import net.minecraftforge.oredict.OreDictionary;
 
 import java.util.HashSet;
-import java.util.List;
 import java.util.Locale;
 import java.util.Set;
 
 public final class LootFilter {
-    private static Set<ResourceLocation> skipItems = Set.of();
-    private static Set<TagKey<Item>> skipTags = Set.of();
-    private static Set<String> skipMods = Set.of();
-    private static Set<String> rarityNames = Set.of();
+    private static Set<ResourceLocation> skipItems = new HashSet<ResourceLocation>();
+    private static Set<Integer> skipOreIds = new HashSet<Integer>();
+    private static Set<String> skipMods = new HashSet<String>();
+    private static Set<String> rarityNames = new HashSet<String>();
 
     private LootFilter() {
     }
 
-    public static void rebuild(List<? extends String> skipList, List<? extends String> rarityList) {
-        Set<ResourceLocation> items = new HashSet<>();
-        Set<TagKey<Item>> tags = new HashSet<>();
-        Set<String> mods = new HashSet<>();
+    public static void rebuild(String[] skipList, String[] rarityList) {
+        Set<ResourceLocation> items = new HashSet<ResourceLocation>();
+        Set<Integer> ores = new HashSet<Integer>();
+        Set<String> mods = new HashSet<String>();
         for (String raw : skipList) {
             if (raw == null) {
                 continue;
@@ -49,19 +47,19 @@ public final class LootFilter {
                     mods.add(namespace);
                 }
             } else if (entry.startsWith("#")) {
-                ResourceLocation rl = ResourceLocation.tryParse(entry.substring(1).trim());
-                if (rl != null) {
-                    tags.add(TagKey.create(Registries.ITEM, rl));
+                String ore = entry.substring(1).trim();
+                if (!ore.isEmpty() && OreDictionary.doesOreNameExist(ore)) {
+                    ores.add(OreDictionary.getOreID(ore));
                 }
             } else {
-                ResourceLocation rl = ResourceLocation.tryParse(entry);
+                ResourceLocation rl = parse(entry);
                 if (rl != null) {
                     items.add(rl);
                 }
             }
         }
 
-        Set<String> rarities = new HashSet<>();
+        Set<String> rarities = new HashSet<String>();
         for (String raw : rarityList) {
             if (raw == null) {
                 continue;
@@ -73,9 +71,17 @@ public final class LootFilter {
         }
 
         skipItems = items;
-        skipTags = tags;
+        skipOreIds = ores;
         skipMods = mods;
         rarityNames = rarities;
+    }
+
+    private static ResourceLocation parse(String entry) {
+        try {
+            return new ResourceLocation(entry);
+        } catch (Exception e) {
+            return null;
+        }
     }
 
     public static boolean shouldSkip(ItemStack stack) {
@@ -85,16 +91,18 @@ public final class LootFilter {
 
         ResourceLocation id = ForgeRegistries.ITEMS.getKey(stack.getItem());
         if (id != null) {
-            if (skipMods.contains(id.getNamespace())) {
+            if (skipMods.contains(id.getResourceDomain())) {
                 return true;
             }
             if (skipItems.contains(id)) {
                 return true;
             }
         }
-        for (TagKey<Item> tag : skipTags) {
-            if (stack.is(tag)) {
-                return true;
+        if (!skipOreIds.isEmpty()) {
+            for (int oreId : OreDictionary.getOreIDs(stack)) {
+                if (skipOreIds.contains(oreId)) {
+                    return true;
+                }
             }
         }
 
@@ -102,7 +110,7 @@ public final class LootFilter {
             if (Config.skipArmorAndTools) {
                 return true;
             }
-            if (Config.skipUnenchantedGear && !stack.isEnchanted()) {
+            if (Config.skipUnenchantedGear && !stack.isItemEnchanted()) {
                 return true;
             }
         }
@@ -126,14 +134,14 @@ public final class LootFilter {
     }
 
     private static boolean isGear(Item item) {
-        return item instanceof ArmorItem
-                || item instanceof ElytraItem
-                || item instanceof TieredItem
-                || item instanceof ShieldItem
-                || item instanceof BowItem
-                || item instanceof CrossbowItem
-                || item instanceof TridentItem
-                || item instanceof FishingRodItem
-                || item instanceof ShearsItem;
+        return item instanceof ItemArmor
+                || item instanceof ItemElytra
+                || item instanceof ItemSword
+                || item instanceof ItemTool
+                || item instanceof ItemHoe
+                || item instanceof ItemBow
+                || item instanceof ItemShield
+                || item instanceof ItemFishingRod
+                || item instanceof ItemShears;
     }
 }
