@@ -127,6 +127,9 @@ public class LootAllHandler {
         for (int i = 0; i < container.getContainerSize(); i++) {
             ItemStack stack = container.getItem(i);
             if (!stack.isEmpty()) {
+                if (LootFilter.shouldSkip(stack)) {
+                    continue;
+                }
                 moved += stack.getCount();
                 giveOrDrop(player, stack);
                 container.setItem(i, ItemStack.EMPTY);

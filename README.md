@@ -45,6 +45,19 @@ Loot Transfer works with any block or item that uses a standard inventory. Anyth
 - **enableLootingTransfer** — Turn the transfer system on/off.
 - **maxLootTransferDistance**, **transferRequireSameDimension**, **transferRequireLoadedChunk** — Transfer configs.
 
+## Item Filters
+
+Choose what gets picked up. These filters apply to everything.
+
+- **skipList** — Items to never loot. Each entry can be:
+  - `modid:item` — a single item (e.g. `minecraft:stick`)
+  - `#modid:tag` — an item tag (e.g. `#minecraft:stairs`)
+  - `@modid` — every item from a mod (e.g. `@alexsmobs`)
+- **skipArmorAndTools** — Skip all armor, tools, and weapons.
+- **skipNonStackable** — Skip all items that only stack to 1.
+- **skipUnenchantedGear** — Skip armor, tools, and weapons *unless* they're enchanted.
+- **rarityFilterMode** & **rarityList** — Filter by rarity tier. Set the mode to `ONLY` (loot only the listed tiers) or `SKIP` (loot everything except them).
+
 ## Game Stages Support
 
 You can gate Loot All's abilities with the [Game Stages](https://www.curseforge.com/minecraft/mc-mods/game-stages) mod.

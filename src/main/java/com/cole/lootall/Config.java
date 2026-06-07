@@ -1,10 +1,13 @@
 package com.cole.lootall;
 
+import com.cole.lootall.server.LootFilter;
 import net.minecraftforge.common.ForgeConfigSpec;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.ModList;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.event.config.ModConfigEvent;
+
+import java.util.List;
 
 @Mod.EventBusSubscriber(modid = LootAll.MODID, bus = Mod.EventBusSubscriber.Bus.MOD)
 public class Config {
@@ -55,6 +58,48 @@ public class Config {
             .comment("Require the transfer target's chunk to already be loaded. If false, the chunk is briefly loaded to receive items.")
             .define("transferRequireLoadedChunk", false);
 
+    public enum RarityMode { OFF, ONLY, SKIP }
+
+    private static final ForgeConfigSpec.ConfigValue<List<? extends String>> SKIP_LIST;
+    private static final ForgeConfigSpec.BooleanValue SKIP_ARMOR_AND_TOOLS;
+    private static final ForgeConfigSpec.BooleanValue SKIP_NON_STACKABLE;
+    private static final ForgeConfigSpec.BooleanValue SKIP_UNENCHANTED_GEAR;
+    private static final ForgeConfigSpec.EnumValue<RarityMode> RARITY_MODE;
+    private static final ForgeConfigSpec.ConfigValue<List<? extends String>> RARITY_LIST;
+
+    static {
+        BUILDER.comment("Filter which items get looted. Skipped items are left in the container.")
+                .push("Item Filters");
+        SKIP_LIST = BUILDER
+                .comment("Items to never loot.",
+                        "Formats: 'modid:item', '#modid:tag', '@modid'")
+                .defineListAllowEmpty(List.of("skipList"), () -> List.of(), Config::isValidListEntry);
+        SKIP_ARMOR_AND_TOOLS = BUILDER
+                .comment("Skip all armor, tools, and weapons.")
+                .define("skipArmorAndTools", false);
+        SKIP_NON_STACKABLE = BUILDER
+                .comment("Skip all items that only stack to 1.")
+                .define("skipNonStackable", false);
+        SKIP_UNENCHANTED_GEAR = BUILDER
+                .comment("Skip armor, tools, and weapons UNLESS they are enchanted.")
+                .define("skipUnenchantedGear", false);
+        RARITY_MODE = BUILDER
+                .comment("Rarity filter mode:",
+                        "  OFF  = no rarity filtering.",
+                        "  ONLY = loot ONLY the tiers listed in rarityList.",
+                        "  SKIP = loot everything EXCEPT the tiers listed in rarityList.")
+                .defineEnum("rarityFilterMode", RarityMode.OFF);
+        RARITY_LIST = BUILDER
+                .comment("Rarity tiers for the filter. Vanilla: COMMON, UNCOMMON, RARE, EPIC.",
+                        "Note: enchanting an item raises its rarity in vanilla.")
+                .defineListAllowEmpty(List.of("rarityList"), () -> List.of(), Config::isValidListEntry);
+        BUILDER.pop();
+    }
+
+    private static boolean isValidListEntry(Object o) {
+        return o instanceof String s && !s.isBlank();
+    }
+
     // Defined only when Game Stages is installed, grouped under a "Game Stages" category.
     private static final ForgeConfigSpec.ConfigValue<String> LOOT_ALL_STAGE;
     private static final ForgeConfigSpec.ConfigValue<String> AUTO_LOOT_STAGE;
@@ -94,6 +139,10 @@ public class Config {
     public static int maxLootTransferDistance;
     public static boolean transferRequireSameDimension;
     public static boolean transferRequireLoadedChunk;
+    public static boolean skipArmorAndTools;
+    public static boolean skipNonStackable;
+    public static boolean skipUnenchantedGear;
+    public static RarityMode rarityMode = RarityMode.OFF;
     public static String lootAllRequiredStage;
     public static String autoLootRequiredStage;
     public static String transferRequiredStage;
@@ -115,6 +164,11 @@ public class Config {
         maxLootTransferDistance = MAX_TRANSFER_DISTANCE.get();
         transferRequireSameDimension = TRANSFER_SAME_DIMENSION.get();
         transferRequireLoadedChunk = TRANSFER_LOADED_CHUNK.get();
+        skipArmorAndTools = SKIP_ARMOR_AND_TOOLS.get();
+        skipNonStackable = SKIP_NON_STACKABLE.get();
+        skipUnenchantedGear = SKIP_UNENCHANTED_GEAR.get();
+        rarityMode = RARITY_MODE.get();
+        LootFilter.rebuild(SKIP_LIST.get(), RARITY_LIST.get());
         if (GAMESTAGES) {
             lootAllRequiredStage = LOOT_ALL_STAGE.get();
             autoLootRequiredStage = AUTO_LOOT_STAGE.get();
