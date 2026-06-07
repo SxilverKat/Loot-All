@@ -3,6 +3,8 @@ package com.cole.lootall.server;
 import com.cole.lootall.Config;
 import com.cole.lootall.compat.AppliedEnergisticsCompat;
 import com.cole.lootall.compat.BaublesCompat;
+import com.cole.lootall.compat.EnderPouchCompat;
+import com.cole.lootall.compat.ForestryBackpackCompat;
 import com.cole.lootall.compat.IronBackpacksCompat;
 import com.cole.lootall.compat.ProjectECompat;
 import com.cole.lootall.compat.RefinedStorageCompat;
@@ -15,6 +17,8 @@ import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.entity.player.InventoryPlayer;
 import net.minecraft.init.Items;
+import net.minecraft.inventory.IInventory;
+import net.minecraft.inventory.ISidedInventory;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.server.MinecraftServer;
@@ -31,6 +35,8 @@ import net.minecraftforge.fml.common.registry.ForgeRegistries;
 import net.minecraftforge.items.CapabilityItemHandler;
 import net.minecraftforge.items.IItemHandler;
 import net.minecraftforge.items.ItemHandlerHelper;
+import net.minecraftforge.items.wrapper.InvWrapper;
+import net.minecraftforge.items.wrapper.SidedInvWrapper;
 
 public final class TransferService {
     private static final boolean RS = Loader.isModLoaded("refinedstorage");
@@ -197,6 +203,14 @@ public final class TransferService {
             if (travel != null) {
                 return travel;
             }
+            ResolvedSink enderPouch = EnderPouchCompat.itemSink(player, heldStack);
+            if (enderPouch != null) {
+                return enderPouch;
+            }
+            ResolvedSink forestry = ForestryBackpackCompat.itemSink(player, heldStack);
+            if (forestry != null) {
+                return forestry;
+            }
             if (AE2) {
                 LootSink wireless = AppliedEnergisticsCompat.wirelessItemSink(player, heldStack);
                 if (wireless != null) {
@@ -271,6 +285,12 @@ public final class TransferService {
             if (TravelersBackpackCompat.isBackpackItem(heldStack)) {
                 return true;
             }
+            if (EnderPouchCompat.isEnderPouch(heldStack)) {
+                return true;
+            }
+            if (ForestryBackpackCompat.isBackpack(heldStack)) {
+                return true;
+            }
             if (AE2 && AppliedEnergisticsCompat.isWirelessTerminal(heldStack)) {
                 return true;
             }
@@ -313,6 +333,12 @@ public final class TransferService {
             if (handler != null) {
                 return handler;
             }
+        }
+        if (be instanceof ISidedInventory) {
+            return new SidedInvWrapper((ISidedInventory) be, EnumFacing.UP);
+        }
+        if (be instanceof IInventory) {
+            return new InvWrapper((IInventory) be);
         }
         return null;
     }
