@@ -84,16 +84,13 @@ public final class LootFilter {
         }
 
         ResourceLocation id = ForgeRegistries.ITEMS.getKey(stack.getItem());
-        if (id != null) {
-            if (skipMods.contains(id.getNamespace())) {
-                return true;
-            }
-            if (skipItems.contains(id)) {
-                return true;
-            }
-        }
-        for (TagKey<Item> tag : skipTags) {
-            if (stack.is(tag)) {
+        if (!(skipItems.isEmpty() && skipTags.isEmpty() && skipMods.isEmpty())) {
+            boolean listed = matchesList(stack, id);
+            if (Config.skipListMode == Config.ListMode.WHITELIST) {
+                if (!listed) {
+                    return true;
+                }
+            } else if (listed) {
                 return true;
             }
         }
@@ -122,6 +119,23 @@ public final class LootFilter {
             }
         }
 
+        return false;
+    }
+
+    private static boolean matchesList(ItemStack stack, ResourceLocation id) {
+        if (id != null) {
+            if (skipMods.contains(id.getNamespace())) {
+                return true;
+            }
+            if (skipItems.contains(id)) {
+                return true;
+            }
+        }
+        for (TagKey<Item> tag : skipTags) {
+            if (stack.is(tag)) {
+                return true;
+            }
+        }
         return false;
     }
 

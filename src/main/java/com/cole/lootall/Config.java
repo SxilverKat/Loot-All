@@ -60,7 +60,10 @@ public class Config {
 
     public enum RarityMode { OFF, ONLY, SKIP }
 
+    public enum ListMode { BLACKLIST, WHITELIST }
+
     private static final ForgeConfigSpec.ConfigValue<List<? extends String>> SKIP_LIST;
+    private static final ForgeConfigSpec.EnumValue<ListMode> SKIP_LIST_MODE;
     private static final ForgeConfigSpec.BooleanValue SKIP_ARMOR_AND_TOOLS;
     private static final ForgeConfigSpec.BooleanValue SKIP_NON_STACKABLE;
     private static final ForgeConfigSpec.BooleanValue SKIP_UNENCHANTED_GEAR;
@@ -71,9 +74,15 @@ public class Config {
         BUILDER.comment("Filter which items get looted. Skipped items are left in the container.")
                 .push("Item Filters");
         SKIP_LIST = BUILDER
-                .comment("Items to never loot.",
+                .comment("Items the skipList filter works from (see skipListMode).",
                         "Formats: 'modid:item', '#modid:tag', '@modid'")
                 .defineListAllowEmpty(List.of("skipList"), () -> List.of(), Config::isValidListEntry);
+        SKIP_LIST_MODE = BUILDER
+                .comment("How the skipList is used:",
+                        "  BLACKLIST = loot everything EXCEPT what is listed.",
+                        "  WHITELIST = loot ONLY what is listed.",
+                        "An empty skipList disables this filter in either mode.")
+                .defineEnum("skipListMode", ListMode.BLACKLIST);
         SKIP_ARMOR_AND_TOOLS = BUILDER
                 .comment("Skip all armor, tools, and weapons.")
                 .define("skipArmorAndTools", false);
@@ -143,6 +152,7 @@ public class Config {
     public static boolean skipNonStackable;
     public static boolean skipUnenchantedGear;
     public static RarityMode rarityMode = RarityMode.OFF;
+    public static ListMode skipListMode = ListMode.BLACKLIST;
     public static String lootAllRequiredStage;
     public static String autoLootRequiredStage;
     public static String transferRequiredStage;
@@ -168,6 +178,7 @@ public class Config {
         skipNonStackable = SKIP_NON_STACKABLE.get();
         skipUnenchantedGear = SKIP_UNENCHANTED_GEAR.get();
         rarityMode = RARITY_MODE.get();
+        skipListMode = SKIP_LIST_MODE.get();
         LootFilter.rebuild(SKIP_LIST.get(), RARITY_LIST.get());
         if (GAMESTAGES) {
             lootAllRequiredStage = LOOT_ALL_STAGE.get();
