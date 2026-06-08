@@ -53,6 +53,9 @@ Choose what gets picked up. These filters apply to everything.
   - `modid:item` — a single item (e.g. `minecraft:stick`)
   - `#modid:tag` — an item tag (e.g. `#minecraft:stairs`)
   - `@modid` — every item from a mod (e.g. `@alexsmobs`)
+  - skipListMode:
+- **BLACKLIST (default)** - loot everything except what's in skipList.
+- **WHITELIST** - loot only what's in skipList.
 - **skipArmorAndTools** — Skip all armor, tools, and weapons.
 - **skipNonStackable** — Skip all items that only stack to 1.
 - **skipUnenchantedGear** — Skip armor, tools, and weapons *unless* they're enchanted.
