@@ -15,7 +15,7 @@ import net.minecraftforge.fml.common.event.FMLPreInitializationEvent;
 public class LootAll {
     public static final String MODID = "lootall";
     public static final String NAME = "Loot All";
-    public static final String VERSION = "1.1.0";
+    public static final String VERSION = "1.3.0";
 
     @SidedProxy(clientSide = "com.cole.lootall.proxy.ClientProxy",
             serverSide = "com.cole.lootall.proxy.CommonProxy")

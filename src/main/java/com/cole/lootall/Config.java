@@ -9,6 +9,8 @@ import java.io.File;
 public final class Config {
     public enum RarityMode { OFF, ONLY, SKIP }
 
+    public enum ListMode { BLACKLIST, WHITELIST }
+
     private static final String CATEGORY_FILTERS = "item_filters";
     private static final String CATEGORY_STAGES = "game_stages";
 
@@ -30,6 +32,7 @@ public final class Config {
     public static boolean skipNonStackable = false;
     public static boolean skipUnenchantedGear = false;
     public static RarityMode rarityMode = RarityMode.OFF;
+    public static ListMode skipListMode = ListMode.BLACKLIST;
     public static String lootAllRequiredStage = "";
     public static String autoLootRequiredStage = "";
     public static String transferRequiredStage = "";
@@ -75,7 +78,11 @@ public final class Config {
         config.setCategoryComment(CATEGORY_FILTERS,
                 "Filter which items get looted. Skipped items are left in the container.");
         skipList = config.getStringList("skipList", CATEGORY_FILTERS, new String[0],
-                "Items to never loot. Formats: 'modid:item', '#oreDictName', '@modid'");
+                "Items the skipList filter works from (see skipListMode). Formats: 'modid:item', '#oreDictName', '@modid'");
+        String listMode = config.getString("skipListMode", CATEGORY_FILTERS, "BLACKLIST",
+                "How the skipList is used:\n  BLACKLIST = loot everything EXCEPT what is listed.\n  WHITELIST = loot ONLY what is listed.\nAn empty skipList disables this filter in either mode.",
+                new String[] {"BLACKLIST", "WHITELIST"});
+        skipListMode = parseListMode(listMode);
         skipArmorAndTools = config.getBoolean("skipArmorAndTools", CATEGORY_FILTERS, false,
                 "Skip all armor, tools, and weapons.");
         skipNonStackable = config.getBoolean("skipNonStackable", CATEGORY_FILTERS, false,
@@ -110,6 +117,14 @@ public final class Config {
             return RarityMode.valueOf(value.trim().toUpperCase(java.util.Locale.ROOT));
         } catch (IllegalArgumentException e) {
             return RarityMode.OFF;
+        }
+    }
+
+    private static ListMode parseListMode(String value) {
+        try {
+            return ListMode.valueOf(value.trim().toUpperCase(java.util.Locale.ROOT));
+        } catch (IllegalArgumentException e) {
+            return ListMode.BLACKLIST;
         }
     }
 
