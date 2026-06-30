@@ -20,6 +20,7 @@ import net.minecraftforge.client.event.ScreenEvent;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
+import net.minecraftforge.network.PacketDistributor;
 
 @Mod.EventBusSubscriber(modid = LootAll.MODID, value = Dist.CLIENT, bus = Mod.EventBusSubscriber.Bus.FORGE)
 public class ClientForgeEvents {
@@ -32,17 +33,16 @@ public class ClientForgeEvents {
         if (mc.player == null) {
             return;
         }
-        TransferFeedback.tick();
         while (KeyBindings.LOOT_ALL.consumeClick()) {
-            LootAllNetwork.CHANNEL.sendToServer(new LootAllPacket());
+            LootAllNetwork.CHANNEL.send(new LootAllPacket(), PacketDistributor.SERVER.noArg());
         }
         if (Config.enableLootingTransfer) {
             while (KeyBindings.SET_TRANSFER_TARGET.consumeClick()) {
                 HitResult hit = mc.hitResult;
                 if (hit instanceof BlockHitResult blockHit && hit.getType() == HitResult.Type.BLOCK) {
-                    LootAllNetwork.CHANNEL.sendToServer(new SetBlockTargetPacket(blockHit.getBlockPos()));
+                    LootAllNetwork.CHANNEL.send(new SetBlockTargetPacket(blockHit.getBlockPos()), PacketDistributor.SERVER.noArg());
                 } else {
-                    LootAllNetwork.CHANNEL.sendToServer(new ClearTargetPacket());
+                    LootAllNetwork.CHANNEL.send(new ClearTargetPacket(), PacketDistributor.SERVER.noArg());
                 }
             }
         }
@@ -65,6 +65,6 @@ public class ClientForgeEvents {
         }
         ItemStack stack = slot.getItem();
         ResourceLocation item = BuiltInRegistries.ITEM.getKey(stack.getItem());
-        LootAllNetwork.CHANNEL.sendToServer(new SetItemTargetPacket(item));
+        LootAllNetwork.CHANNEL.send(new SetItemTargetPacket(item), PacketDistributor.SERVER.noArg());
     }
 }

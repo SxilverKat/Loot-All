@@ -1,6 +1,5 @@
 package com.cole.lootall.network;
 
-import com.cole.lootall.server.StageGate;
 import com.cole.lootall.server.TransferData;
 import com.cole.lootall.server.TransferService;
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -11,9 +10,7 @@ import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
-import net.minecraftforge.network.NetworkEvent;
-
-import java.util.function.Supplier;
+import net.minecraftforge.event.network.CustomPayloadEvent;
 
 public class SetItemTargetPacket {
     private final ResourceLocation item;
@@ -30,30 +27,22 @@ public class SetItemTargetPacket {
         return new SetItemTargetPacket(buf.readResourceLocation());
     }
 
-    public static void handle(SetItemTargetPacket msg, Supplier<NetworkEvent.Context> ctx) {
-        NetworkEvent.Context context = ctx.get();
-        context.enqueueWork(() -> {
-            ServerPlayer player = context.getSender();
-            if (player == null) {
-                return;
-            }
-            MinecraftServer server = player.getServer();
-            if (server == null) {
-                return;
-            }
-            if (!StageGate.canTransfer(player)) {
-                player.displayClientMessage(Component.translatable("message.lootall.no_stage"), true);
-                return;
-            }
-            Item item = BuiltInRegistries.ITEM.get(msg.item);
-            if (!TransferService.canTargetItem(player, item)) {
-                player.displayClientMessage(Component.translatable("message.lootall.item_target_invalid"), true);
-                return;
-            }
-            TransferData.get(server).setItemTarget(player.getUUID(), msg.item);
-            Component name = new ItemStack(item).getHoverName();
-            player.displayClientMessage(Component.translatable("message.lootall.target_set_item", name), true);
-        });
-        context.setPacketHandled(true);
+    public static void handle(SetItemTargetPacket msg, CustomPayloadEvent.Context ctx) {
+        ServerPlayer player = ctx.getSender();
+        if (player == null) {
+            return;
+        }
+        MinecraftServer server = player.getServer();
+        if (server == null) {
+            return;
+        }
+        Item item = BuiltInRegistries.ITEM.get(msg.item);
+        if (!TransferService.canTargetItem(player, item)) {
+            player.displayClientMessage(Component.translatable("message.lootall.item_target_invalid"), true);
+            return;
+        }
+        TransferData.get(server).setItemTarget(player.getUUID(), msg.item);
+        Component name = new ItemStack(item).getHoverName();
+        player.displayClientMessage(Component.translatable("message.lootall.target_set_item", name), true);
     }
 }

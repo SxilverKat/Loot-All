@@ -1,13 +1,9 @@
 package com.cole.lootall.network;
 
 import com.cole.lootall.server.LootAllHandler;
-import com.cole.lootall.server.StageGate;
 import net.minecraft.network.FriendlyByteBuf;
-import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraftforge.network.NetworkEvent;
-
-import java.util.function.Supplier;
+import net.minecraftforge.event.network.CustomPayloadEvent;
 
 public class LootAllPacket {
     public LootAllPacket() {
@@ -20,18 +16,10 @@ public class LootAllPacket {
         return new LootAllPacket();
     }
 
-    public static void handle(LootAllPacket msg, Supplier<NetworkEvent.Context> ctx) {
-        NetworkEvent.Context context = ctx.get();
-        context.enqueueWork(() -> {
-            ServerPlayer player = context.getSender();
-            if (player != null) {
-                if (!StageGate.canLootAll(player)) {
-                    player.displayClientMessage(Component.translatable("message.lootall.no_stage"), true);
-                    return;
-                }
-                LootAllHandler.lootAll(player);
-            }
-        });
-        context.setPacketHandled(true);
+    public static void handle(LootAllPacket msg, CustomPayloadEvent.Context ctx) {
+        ServerPlayer player = ctx.getSender();
+        if (player != null) {
+            LootAllHandler.lootAll(player);
+        }
     }
 }

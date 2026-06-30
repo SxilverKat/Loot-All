@@ -2,35 +2,36 @@ package com.cole.lootall.network;
 
 import com.cole.lootall.LootAll;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraftforge.network.ChannelBuilder;
 import net.minecraftforge.network.NetworkDirection;
-import net.minecraftforge.network.NetworkRegistry;
-import net.minecraftforge.network.simple.SimpleChannel;
-
-import java.util.Optional;
+import net.minecraftforge.network.SimpleChannel;
 
 public class LootAllNetwork {
-    private static final String PROTOCOL = "1";
-
-    public static final SimpleChannel CHANNEL = NetworkRegistry.newSimpleChannel(
-            new ResourceLocation(LootAll.MODID, "main"),
-            () -> PROTOCOL,
-            PROTOCOL::equals,
-            PROTOCOL::equals);
+    public static final SimpleChannel CHANNEL = ChannelBuilder
+            .named(ResourceLocation.fromNamespaceAndPath(LootAll.MODID, "main"))
+            .networkProtocolVersion(1)
+            .simpleChannel();
 
     public static void register() {
-        CHANNEL.registerMessage(0, LootAllPacket.class,
-                LootAllPacket::encode, LootAllPacket::decode, LootAllPacket::handle);
-        CHANNEL.registerMessage(1, SetBlockTargetPacket.class,
-                SetBlockTargetPacket::encode, SetBlockTargetPacket::decode, SetBlockTargetPacket::handle);
-        CHANNEL.registerMessage(2, ClearTargetPacket.class,
-                ClearTargetPacket::encode, ClearTargetPacket::decode, ClearTargetPacket::handle);
-        CHANNEL.registerMessage(3, SetItemTargetPacket.class,
-                SetItemTargetPacket::encode, SetItemTargetPacket::decode, SetItemTargetPacket::handle);
-        CHANNEL.registerMessage(4, LootFeedbackPacket.class,
-                LootFeedbackPacket::encode, LootFeedbackPacket::decode, LootFeedbackPacket::handle,
-                Optional.of(NetworkDirection.PLAY_TO_CLIENT));
-        CHANNEL.registerMessage(5, RefreshBlockPacket.class,
-                RefreshBlockPacket::encode, RefreshBlockPacket::decode, RefreshBlockPacket::handle,
-                Optional.of(NetworkDirection.PLAY_TO_CLIENT));
+        CHANNEL.messageBuilder(LootAllPacket.class, NetworkDirection.PLAY_TO_SERVER)
+                .encoder(LootAllPacket::encode)
+                .decoder(LootAllPacket::decode)
+                .consumerMainThread(LootAllPacket::handle)
+                .add();
+        CHANNEL.messageBuilder(SetBlockTargetPacket.class, NetworkDirection.PLAY_TO_SERVER)
+                .encoder(SetBlockTargetPacket::encode)
+                .decoder(SetBlockTargetPacket::decode)
+                .consumerMainThread(SetBlockTargetPacket::handle)
+                .add();
+        CHANNEL.messageBuilder(ClearTargetPacket.class, NetworkDirection.PLAY_TO_SERVER)
+                .encoder(ClearTargetPacket::encode)
+                .decoder(ClearTargetPacket::decode)
+                .consumerMainThread(ClearTargetPacket::handle)
+                .add();
+        CHANNEL.messageBuilder(SetItemTargetPacket.class, NetworkDirection.PLAY_TO_SERVER)
+                .encoder(SetItemTargetPacket::encode)
+                .decoder(SetItemTargetPacket::decode)
+                .consumerMainThread(SetItemTargetPacket::handle)
+                .add();
     }
 }

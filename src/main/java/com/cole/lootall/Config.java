@@ -3,7 +3,6 @@ package com.cole.lootall;
 import com.cole.lootall.server.LootFilter;
 import net.minecraftforge.common.ForgeConfigSpec;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.ModList;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.event.config.ModConfigEvent;
 
@@ -12,7 +11,6 @@ import java.util.List;
 @Mod.EventBusSubscriber(modid = LootAll.MODID, bus = Mod.EventBusSubscriber.Bus.MOD)
 public class Config {
     private static final ForgeConfigSpec.Builder BUILDER = new ForgeConfigSpec.Builder();
-    private static final boolean GAMESTAGES = ModList.get().isLoaded("gamestages");
 
     private static final ForgeConfigSpec.IntValue RANGE = BUILDER
             .comment("Radius in blocks to search for loot containers")
@@ -109,32 +107,6 @@ public class Config {
         return o instanceof String s && !s.isBlank();
     }
 
-    // Defined only when Game Stages is installed, grouped under a "Game Stages" category.
-    private static final ForgeConfigSpec.ConfigValue<String> LOOT_ALL_STAGE;
-    private static final ForgeConfigSpec.ConfigValue<String> AUTO_LOOT_STAGE;
-    private static final ForgeConfigSpec.ConfigValue<String> TRANSFER_STAGE;
-
-    static {
-        if (GAMESTAGES) {
-            BUILDER.comment("Restrict Loot All abilities behind Game Stages.")
-                    .push("Game Stages");
-            LOOT_ALL_STAGE = BUILDER
-                    .comment("Stage a player must have to use the Loot All key.")
-                    .define("lootAllRequiredStage", "");
-            AUTO_LOOT_STAGE = BUILDER
-                    .comment("Stage a player must have for auto-looting to run for them.")
-                    .define("autoLootRequiredStage", "");
-            TRANSFER_STAGE = BUILDER
-                    .comment("Stage a player must have to use the Loot Transfer system.")
-                    .define("transferRequiredStage", "");
-            BUILDER.pop();
-        } else {
-            LOOT_ALL_STAGE = null;
-            AUTO_LOOT_STAGE = null;
-            TRANSFER_STAGE = null;
-        }
-    }
-
     static final ForgeConfigSpec SPEC = BUILDER.build();
 
     public static int range;
@@ -153,9 +125,6 @@ public class Config {
     public static boolean skipUnenchantedGear;
     public static RarityMode rarityMode = RarityMode.OFF;
     public static ListMode skipListMode = ListMode.BLACKLIST;
-    public static String lootAllRequiredStage;
-    public static String autoLootRequiredStage;
-    public static String transferRequiredStage;
 
     public static boolean transferEnabledForRegistration() {
         return !SPEC.isLoaded() || ENABLE_TRANSFER.get();
@@ -180,10 +149,5 @@ public class Config {
         rarityMode = RARITY_MODE.get();
         skipListMode = SKIP_LIST_MODE.get();
         LootFilter.rebuild(SKIP_LIST.get(), RARITY_LIST.get());
-        if (GAMESTAGES) {
-            lootAllRequiredStage = LOOT_ALL_STAGE.get();
-            autoLootRequiredStage = AUTO_LOOT_STAGE.get();
-            transferRequiredStage = TRANSFER_STAGE.get();
-        }
     }
 }

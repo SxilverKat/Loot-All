@@ -14,6 +14,5 @@
   "message.lootall.target_cleared": "Transfer target cleared",
   "message.lootall.target_invalid": "That block can't receive items",
   "message.lootall.item_target_invalid": "That item can't store loot",
-  "message.lootall.no_stage": "You haven't unlocked this ability yet",
   "name.lootall.me_network": "ME Network"
 }

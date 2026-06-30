@@ -28,7 +28,7 @@ public class ServerEvents {
             return;
         }
         for (ServerPlayer player : server.getPlayerList().getPlayers()) {
-            if (!player.isSpectator() && StageGate.canAutoLoot(player)) {
+            if (!player.isSpectator()) {
                 LootAllHandler.lootAll(player, true);
             }
         }
