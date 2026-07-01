@@ -1,60 +1,58 @@
 package com.cole.lootall;
 
 import com.cole.lootall.server.LootFilter;
-import net.minecraftforge.common.ForgeConfigSpec;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.ModList;
-import net.minecraftforge.fml.common.Mod;
-import net.minecraftforge.fml.event.config.ModConfigEvent;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.fml.event.config.ModConfigEvent;
+import net.neoforged.neoforge.common.ModConfigSpec;
 
 import java.util.List;
 
-@Mod.EventBusSubscriber(modid = LootAll.MODID, bus = Mod.EventBusSubscriber.Bus.MOD)
+@EventBusSubscriber(modid = LootAll.MODID)
 public class Config {
-    private static final ForgeConfigSpec.Builder BUILDER = new ForgeConfigSpec.Builder();
-    private static final boolean GAMESTAGES = ModList.get().isLoaded("gamestages");
+    private static final ModConfigSpec.Builder BUILDER = new ModConfigSpec.Builder();
 
-    private static final ForgeConfigSpec.IntValue RANGE = BUILDER
+    private static final ModConfigSpec.IntValue RANGE = BUILDER
             .comment("Radius in blocks to search for loot containers")
             .defineInRange("range", 20, 1, 5000);
 
-    private static final ForgeConfigSpec.BooleanValue INCLUDE_MINECARTS = BUILDER
+    private static final ModConfigSpec.BooleanValue INCLUDE_MINECARTS = BUILDER
             .comment("Loot nearby minecarts that have a loot table")
             .define("includeMinecarts", true);
 
-    private static final ForgeConfigSpec.BooleanValue FEEDBACK_MESSAGE = BUILDER
+    private static final ModConfigSpec.BooleanValue FEEDBACK_MESSAGE = BUILDER
             .comment("Show an action bar message after looting")
             .define("feedbackMessage", true);
 
-    private static final ForgeConfigSpec.BooleanValue PLAY_SOUND = BUILDER
+    private static final ModConfigSpec.BooleanValue PLAY_SOUND = BUILDER
             .comment("Play a pickup sound after looting")
             .define("playSound", true);
 
-    private static final ForgeConfigSpec.BooleanValue EXCLUDE_BLOCKED = BUILDER
+    private static final ModConfigSpec.BooleanValue EXCLUDE_BLOCKED = BUILDER
             .comment("Exclude blocked containers: skip chests that cannot be opened (A block on top)")
             .define("excludeBlockedContainers", false);
 
-    private static final ForgeConfigSpec.BooleanValue AUTO_LOOTING = BUILDER
+    private static final ModConfigSpec.BooleanValue AUTO_LOOTING = BUILDER
             .comment("Automatically loot nearby containers on a timer, without pressing the key")
             .define("autoLooting", false);
 
-    private static final ForgeConfigSpec.IntValue AUTO_LOOTING_TIMER = BUILDER
+    private static final ModConfigSpec.IntValue AUTO_LOOTING_TIMER = BUILDER
             .comment("How often auto looting runs, in seconds")
             .defineInRange("autoLootingTimer", 20, 1, 3600);
 
-    private static final ForgeConfigSpec.BooleanValue ENABLE_TRANSFER = BUILDER
+    private static final ModConfigSpec.BooleanValue ENABLE_TRANSFER = BUILDER
             .comment("Enable the loot transfer system.")
             .define("enableLootingTransfer", true);
 
-    private static final ForgeConfigSpec.IntValue MAX_TRANSFER_DISTANCE = BUILDER
+    private static final ModConfigSpec.IntValue MAX_TRANSFER_DISTANCE = BUILDER
             .comment("Maximum distance in blocks to a transfer target; 0 = unlimited. Only applies when the target is in the same dimension as the player.")
             .defineInRange("maxLootTransferDistance", 0, 0, 100000);
 
-    private static final ForgeConfigSpec.BooleanValue TRANSFER_SAME_DIMENSION = BUILDER
+    private static final ModConfigSpec.BooleanValue TRANSFER_SAME_DIMENSION = BUILDER
             .comment("Require the transfer target to be in the same dimension as the player")
             .define("transferRequireSameDimension", false);
 
-    private static final ForgeConfigSpec.BooleanValue TRANSFER_LOADED_CHUNK = BUILDER
+    private static final ModConfigSpec.BooleanValue TRANSFER_LOADED_CHUNK = BUILDER
             .comment("Require the transfer target's chunk to already be loaded. If false, the chunk is briefly loaded to receive items.")
             .define("transferRequireLoadedChunk", false);
 
@@ -62,13 +60,13 @@ public class Config {
 
     public enum ListMode { BLACKLIST, WHITELIST }
 
-    private static final ForgeConfigSpec.ConfigValue<List<? extends String>> SKIP_LIST;
-    private static final ForgeConfigSpec.EnumValue<ListMode> SKIP_LIST_MODE;
-    private static final ForgeConfigSpec.BooleanValue SKIP_ARMOR_AND_TOOLS;
-    private static final ForgeConfigSpec.BooleanValue SKIP_NON_STACKABLE;
-    private static final ForgeConfigSpec.BooleanValue SKIP_UNENCHANTED_GEAR;
-    private static final ForgeConfigSpec.EnumValue<RarityMode> RARITY_MODE;
-    private static final ForgeConfigSpec.ConfigValue<List<? extends String>> RARITY_LIST;
+    private static final ModConfigSpec.ConfigValue<List<? extends String>> SKIP_LIST;
+    private static final ModConfigSpec.EnumValue<ListMode> SKIP_LIST_MODE;
+    private static final ModConfigSpec.BooleanValue SKIP_ARMOR_AND_TOOLS;
+    private static final ModConfigSpec.BooleanValue SKIP_NON_STACKABLE;
+    private static final ModConfigSpec.BooleanValue SKIP_UNENCHANTED_GEAR;
+    private static final ModConfigSpec.EnumValue<RarityMode> RARITY_MODE;
+    private static final ModConfigSpec.ConfigValue<List<? extends String>> RARITY_LIST;
 
     static {
         BUILDER.comment("Filter which items get looted. Skipped items are left in the container.")
@@ -109,33 +107,7 @@ public class Config {
         return o instanceof String s && !s.isBlank();
     }
 
-    // Defined only when Game Stages is installed, grouped under a "Game Stages" category.
-    private static final ForgeConfigSpec.ConfigValue<String> LOOT_ALL_STAGE;
-    private static final ForgeConfigSpec.ConfigValue<String> AUTO_LOOT_STAGE;
-    private static final ForgeConfigSpec.ConfigValue<String> TRANSFER_STAGE;
-
-    static {
-        if (GAMESTAGES) {
-            BUILDER.comment("Restrict Loot All abilities behind Game Stages.")
-                    .push("Game Stages");
-            LOOT_ALL_STAGE = BUILDER
-                    .comment("Stage a player must have to use the Loot All key.")
-                    .define("lootAllRequiredStage", "");
-            AUTO_LOOT_STAGE = BUILDER
-                    .comment("Stage a player must have for auto-looting to run for them.")
-                    .define("autoLootRequiredStage", "");
-            TRANSFER_STAGE = BUILDER
-                    .comment("Stage a player must have to use the Loot Transfer system.")
-                    .define("transferRequiredStage", "");
-            BUILDER.pop();
-        } else {
-            LOOT_ALL_STAGE = null;
-            AUTO_LOOT_STAGE = null;
-            TRANSFER_STAGE = null;
-        }
-    }
-
-    static final ForgeConfigSpec SPEC = BUILDER.build();
+    static final ModConfigSpec SPEC = BUILDER.build();
 
     public static int range;
     public static boolean includeMinecarts;
@@ -153,16 +125,22 @@ public class Config {
     public static boolean skipUnenchantedGear;
     public static RarityMode rarityMode = RarityMode.OFF;
     public static ListMode skipListMode = ListMode.BLACKLIST;
-    public static String lootAllRequiredStage;
-    public static String autoLootRequiredStage;
-    public static String transferRequiredStage;
 
     public static boolean transferEnabledForRegistration() {
         return !SPEC.isLoaded() || ENABLE_TRANSFER.get();
     }
 
     @SubscribeEvent
-    static void onLoad(final ModConfigEvent event) {
+    static void onLoad(final ModConfigEvent.Loading event) {
+        bake();
+    }
+
+    @SubscribeEvent
+    static void onReload(final ModConfigEvent.Reloading event) {
+        bake();
+    }
+
+    private static void bake() {
         range = RANGE.get();
         includeMinecarts = INCLUDE_MINECARTS.get();
         feedbackMessage = FEEDBACK_MESSAGE.get();
@@ -180,10 +158,5 @@ public class Config {
         rarityMode = RARITY_MODE.get();
         skipListMode = SKIP_LIST_MODE.get();
         LootFilter.rebuild(SKIP_LIST.get(), RARITY_LIST.get());
-        if (GAMESTAGES) {
-            lootAllRequiredStage = LOOT_ALL_STAGE.get();
-            autoLootRequiredStage = AUTO_LOOT_STAGE.get();
-            transferRequiredStage = TRANSFER_STAGE.get();
-        }
     }
 }

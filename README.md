@@ -58,10 +58,6 @@ Choose what gets picked up. These filters apply to everything.
 - **skipUnenchantedGear** — Skip armor, tools, and weapons *unless* they're enchanted.
 - **rarityFilterMode** & **rarityList** — Filter by rarity tier. Set the mode to `ONLY` (loot only the listed tiers) or `SKIP` (loot everything except them).
 
-## Game Stages Support
-
-You can gate Loot All's abilities with the [Game Stages](https://www.curseforge.com/minecraft/mc-mods/game-stages) mod.
-
 ## Default Keybinds
 
 - `-` — Loot nearby containers.

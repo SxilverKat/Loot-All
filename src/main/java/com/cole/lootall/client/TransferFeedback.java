@@ -1,8 +1,8 @@
 package com.cole.lootall.client;
 
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.LayeredDraw;
 import net.minecraft.network.chat.Component;
-import net.minecraftforge.client.gui.overlay.IGuiOverlay;
 
 import javax.annotation.Nullable;
 
@@ -27,7 +27,7 @@ public class TransferFeedback {
         }
     }
 
-    public static final IGuiOverlay OVERLAY = (gui, graphics, partialTick, width, height) -> {
+    public static final LayeredDraw.Layer OVERLAY = (graphics, deltaTracker) -> {
         if (ticks <= 0 || message == null) {
             return;
         }
@@ -35,6 +35,8 @@ public class TransferFeedback {
         if (mc.options.hideGui) {
             return;
         }
+        int width = graphics.guiWidth();
+        int height = graphics.guiHeight();
         int alpha = ticks >= FADE ? 255 : ticks * 255 / FADE;
         if (alpha < 8) {
             return;

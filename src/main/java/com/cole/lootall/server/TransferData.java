@@ -1,6 +1,7 @@
 package com.cole.lootall.server;
 
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.HolderLookup;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
@@ -30,7 +31,8 @@ public class TransferData extends SavedData {
     private final Map<UUID, Target> targets = new HashMap<>();
 
     public static TransferData get(MinecraftServer server) {
-        return server.overworld().getDataStorage().computeIfAbsent(TransferData::load, TransferData::new, NAME);
+        return server.overworld().getDataStorage().computeIfAbsent(
+                new SavedData.Factory<>(TransferData::new, TransferData::load), NAME);
     }
 
     public Target getTarget(UUID player) {
@@ -53,17 +55,17 @@ public class TransferData extends SavedData {
         }
     }
 
-    public static TransferData load(CompoundTag tag) {
+    public static TransferData load(CompoundTag tag, HolderLookup.Provider registries) {
         TransferData data = new TransferData();
         ListTag list = tag.getList("targets", Tag.TAG_COMPOUND);
         for (int i = 0; i < list.size(); i++) {
             CompoundTag entry = list.getCompound(i);
             UUID player = entry.getUUID("player");
             if ("item".equals(entry.getString("type"))) {
-                data.targets.put(player, new ItemTarget(new ResourceLocation(entry.getString("item"))));
+                data.targets.put(player, new ItemTarget(ResourceLocation.parse(entry.getString("item"))));
             } else {
                 ResourceKey<Level> dimension = ResourceKey.create(
-                        Registries.DIMENSION, new ResourceLocation(entry.getString("dimension")));
+                        Registries.DIMENSION, ResourceLocation.parse(entry.getString("dimension")));
                 BlockPos pos = new BlockPos(entry.getInt("x"), entry.getInt("y"), entry.getInt("z"));
                 data.targets.put(player, new BlockTarget(dimension, pos));
             }
@@ -72,7 +74,7 @@ public class TransferData extends SavedData {
     }
 
     @Override
-    public CompoundTag save(CompoundTag tag) {
+    public CompoundTag save(CompoundTag tag, HolderLookup.Provider registries) {
         ListTag list = new ListTag();
         targets.forEach((player, target) -> {
             CompoundTag entry = new CompoundTag();

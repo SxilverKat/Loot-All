@@ -1,71 +1,46 @@
 package com.cole.lootall.compat;
 
-import com.cole.lootall.network.LootAllNetwork;
-import com.cole.lootall.network.RefreshBlockPacket;
 import com.cole.lootall.server.LootAllHandler;
-import net.minecraft.network.protocol.Packet;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.vehicle.AbstractMinecartContainer;
-import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
-import net.minecraft.world.level.block.entity.RandomizableContainerBlockEntity;
-import net.minecraftforge.network.PacketDistributor;
-import noobanidus.mods.lootr.api.blockentity.ILootBlockEntity;
-import noobanidus.mods.lootr.api.inventory.ILootrInventory;
-import noobanidus.mods.lootr.data.DataStorage;
-import noobanidus.mods.lootr.entity.LootrChestMinecartEntity;
+import noobanidus.mods.lootr.common.api.LootrAPI;
+import noobanidus.mods.lootr.common.api.data.ILootrInfoProvider;
+import noobanidus.mods.lootr.common.api.data.blockentity.ILootrBlockEntity;
+import noobanidus.mods.lootr.common.api.data.entity.ILootrCart;
+import noobanidus.mods.lootr.common.api.data.inventory.ILootrInventory;
 
 public class LootrCompat {
     public static boolean isLootrContainer(BlockEntity be) {
-        return be instanceof ILootBlockEntity;
+        return be instanceof ILootrBlockEntity;
     }
 
     public static boolean isLootrCart(AbstractMinecartContainer cart) {
-        return cart instanceof LootrChestMinecartEntity;
+        return cart instanceof ILootrCart;
     }
 
     public static int lootContainer(ServerPlayer player, BlockEntity be) {
-        if (!(be instanceof ILootBlockEntity tile) || !(be instanceof RandomizableContainerBlockEntity rc)) {
+        if (!(be instanceof ILootrBlockEntity provider)) {
             return -1;
         }
-        Level level = be.getLevel();
-        if (level == null) {
-            return -1;
-        }
-        ILootrInventory inventory = DataStorage.getInventory(
-                level, tile.getTileId(), be.getBlockPos(), player, rc, tile::unpackLootTable);
-        if (inventory == null) {
-            return -1;
-        }
-        int looted = LootAllHandler.drain(player, inventory);
-        inventory.setChanged();
-        if (tile.getOpeners().add(player.getUUID())) {
-            be.setChanged();
-            tile.updatePacketViaState();
-            Packet<?> updatePacket = be.getUpdatePacket();
-            if (updatePacket != null) {
-                player.connection.send(updatePacket);
-            }
-            LootAllNetwork.CHANNEL.send(PacketDistributor.PLAYER.with(() -> player),
-                    new RefreshBlockPacket(be.getBlockPos()));
-        }
-        return looted;
+        return loot(player, provider);
     }
 
     public static int lootCart(ServerPlayer player, AbstractMinecartContainer cart) {
-        if (!(cart instanceof LootrChestMinecartEntity lootrCart)) {
+        if (!(cart instanceof ILootrCart provider)) {
             return -1;
         }
-        ILootrInventory inventory = DataStorage.getInventory(
-                cart.level(), lootrCart, player, lootrCart::addLoot);
+        return loot(player, provider);
+    }
+
+    private static int loot(ServerPlayer player, ILootrInfoProvider provider) {
+        ILootrInventory inventory = LootrAPI.getInventory(provider, player);
         if (inventory == null) {
             return -1;
         }
         int looted = LootAllHandler.drain(player, inventory);
         inventory.setChanged();
-        if (lootrCart.getOpeners().add(player.getUUID())) {
-            lootrCart.setChanged();
-        }
+        provider.performOpen(player);
         return looted;
     }
 }

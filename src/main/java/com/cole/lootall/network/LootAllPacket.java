@@ -1,37 +1,28 @@
 package com.cole.lootall.network;
 
+import com.cole.lootall.LootAll;
 import com.cole.lootall.server.LootAllHandler;
-import com.cole.lootall.server.StageGate;
-import net.minecraft.network.FriendlyByteBuf;
-import net.minecraft.network.chat.Component;
+import net.minecraft.network.RegistryFriendlyByteBuf;
+import net.minecraft.network.codec.StreamCodec;
+import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraftforge.network.NetworkEvent;
+import net.neoforged.neoforge.network.handling.IPayloadContext;
 
-import java.util.function.Supplier;
+public record LootAllPacket() implements CustomPacketPayload {
+    public static final Type<LootAllPacket> TYPE =
+            new Type<>(ResourceLocation.fromNamespaceAndPath(LootAll.MODID, "loot_all"));
+    public static final StreamCodec<RegistryFriendlyByteBuf, LootAllPacket> CODEC =
+            StreamCodec.unit(new LootAllPacket());
 
-public class LootAllPacket {
-    public LootAllPacket() {
+    @Override
+    public Type<LootAllPacket> type() {
+        return TYPE;
     }
 
-    public static void encode(LootAllPacket msg, FriendlyByteBuf buf) {
-    }
-
-    public static LootAllPacket decode(FriendlyByteBuf buf) {
-        return new LootAllPacket();
-    }
-
-    public static void handle(LootAllPacket msg, Supplier<NetworkEvent.Context> ctx) {
-        NetworkEvent.Context context = ctx.get();
-        context.enqueueWork(() -> {
-            ServerPlayer player = context.getSender();
-            if (player != null) {
-                if (!StageGate.canLootAll(player)) {
-                    player.displayClientMessage(Component.translatable("message.lootall.no_stage"), true);
-                    return;
-                }
-                LootAllHandler.lootAll(player);
-            }
-        });
-        context.setPacketHandled(true);
+    public static void handle(LootAllPacket msg, IPayloadContext ctx) {
+        if (ctx.player() instanceof ServerPlayer player) {
+            LootAllHandler.lootAll(player);
+        }
     }
 }

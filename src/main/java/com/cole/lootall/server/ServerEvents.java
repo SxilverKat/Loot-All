@@ -4,18 +4,17 @@ import com.cole.lootall.Config;
 import com.cole.lootall.LootAll;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraftforge.event.TickEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod;
-import net.minecraftforge.server.ServerLifecycleHooks;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.neoforge.event.tick.ServerTickEvent;
 
-@Mod.EventBusSubscriber(modid = LootAll.MODID)
+@EventBusSubscriber(modid = LootAll.MODID)
 public class ServerEvents {
     private static int ticks;
 
     @SubscribeEvent
-    public static void onServerTick(TickEvent.ServerTickEvent event) {
-        if (event.phase != TickEvent.Phase.END || !Config.autoLooting) {
+    public static void onServerTick(ServerTickEvent.Post event) {
+        if (!Config.autoLooting) {
             return;
         }
         if (++ticks < Config.autoLootingTimer * 20) {
@@ -23,12 +22,9 @@ public class ServerEvents {
         }
         ticks = 0;
 
-        MinecraftServer server = ServerLifecycleHooks.getCurrentServer();
-        if (server == null) {
-            return;
-        }
+        MinecraftServer server = event.getServer();
         for (ServerPlayer player : server.getPlayerList().getPlayers()) {
-            if (!player.isSpectator() && StageGate.canAutoLoot(player)) {
+            if (!player.isSpectator()) {
                 LootAllHandler.lootAll(player, true);
             }
         }

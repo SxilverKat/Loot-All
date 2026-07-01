@@ -3,7 +3,6 @@ package com.cole.lootall.client;
 import com.cole.lootall.Config;
 import com.cole.lootall.LootAll;
 import com.cole.lootall.network.ClearTargetPacket;
-import com.cole.lootall.network.LootAllNetwork;
 import com.cole.lootall.network.LootAllPacket;
 import com.cole.lootall.network.SetBlockTargetPacket;
 import com.cole.lootall.network.SetItemTargetPacket;
@@ -15,34 +14,32 @@ import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.HitResult;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.client.event.ScreenEvent;
-import net.minecraftforge.event.TickEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.neoforge.client.event.ScreenEvent;
+import net.neoforged.neoforge.client.event.ClientTickEvent;
+import net.neoforged.neoforge.network.PacketDistributor;
 
-@Mod.EventBusSubscriber(modid = LootAll.MODID, value = Dist.CLIENT, bus = Mod.EventBusSubscriber.Bus.FORGE)
+@EventBusSubscriber(modid = LootAll.MODID, value = Dist.CLIENT)
 public class ClientForgeEvents {
     @SubscribeEvent
-    public static void onClientTick(TickEvent.ClientTickEvent event) {
-        if (event.phase != TickEvent.Phase.END) {
-            return;
-        }
+    public static void onClientTick(ClientTickEvent.Post event) {
         Minecraft mc = Minecraft.getInstance();
         if (mc.player == null) {
             return;
         }
         TransferFeedback.tick();
         while (KeyBindings.LOOT_ALL.consumeClick()) {
-            LootAllNetwork.CHANNEL.sendToServer(new LootAllPacket());
+            PacketDistributor.sendToServer(new LootAllPacket());
         }
         if (Config.enableLootingTransfer) {
             while (KeyBindings.SET_TRANSFER_TARGET.consumeClick()) {
                 HitResult hit = mc.hitResult;
                 if (hit instanceof BlockHitResult blockHit && hit.getType() == HitResult.Type.BLOCK) {
-                    LootAllNetwork.CHANNEL.sendToServer(new SetBlockTargetPacket(blockHit.getBlockPos()));
+                    PacketDistributor.sendToServer(new SetBlockTargetPacket(blockHit.getBlockPos()));
                 } else {
-                    LootAllNetwork.CHANNEL.sendToServer(new ClearTargetPacket());
+                    PacketDistributor.sendToServer(new ClearTargetPacket());
                 }
             }
         }
@@ -65,6 +62,6 @@ public class ClientForgeEvents {
         }
         ItemStack stack = slot.getItem();
         ResourceLocation item = BuiltInRegistries.ITEM.getKey(stack.getItem());
-        LootAllNetwork.CHANNEL.sendToServer(new SetItemTargetPacket(item));
+        PacketDistributor.sendToServer(new SetItemTargetPacket(item));
     }
 }

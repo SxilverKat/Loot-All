@@ -2,7 +2,6 @@ package com.cole.lootall.server;
 
 import com.cole.lootall.Config;
 import com.cole.lootall.compat.LootrCompat;
-import com.cole.lootall.network.LootAllNetwork;
 import com.cole.lootall.network.LootFeedbackPacket;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
@@ -18,12 +17,13 @@ import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.RandomizableContainerBlockEntity;
 import net.minecraft.world.level.chunk.LevelChunk;
 import net.minecraft.world.phys.AABB;
-import net.minecraftforge.fml.ModList;
-import net.minecraftforge.items.ItemHandlerHelper;
-import net.minecraftforge.network.PacketDistributor;
+import net.neoforged.fml.ModList;
+import net.neoforged.neoforge.items.ItemHandlerHelper;
+import net.neoforged.neoforge.network.PacketDistributor;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 public class LootAllHandler {
     private static final boolean LOOTR = ModList.get().isLoaded("lootr");
@@ -91,7 +91,7 @@ public class LootAllHandler {
                     result.items += looted;
                     result.containers++;
                 }
-            } else if (be instanceof RandomizableContainerBlockEntity rc && rc.lootTable != null) {
+            } else if (be instanceof RandomizableContainerBlockEntity rc && rc.getLootTable() != null) {
                 rc.unpackLootTable(player);
                 result.items += drain(player, rc);
                 rc.setChanged();
@@ -169,8 +169,7 @@ public class LootAllHandler {
                 message = Component.translatable("message.lootall.looted",
                         result.items, itemWord, result.containers, containerWord);
             }
-            LootAllNetwork.CHANNEL.send(PacketDistributor.PLAYER.with(() -> player),
-                    new LootFeedbackPacket(message, transferName));
+            PacketDistributor.sendToPlayer(player, new LootFeedbackPacket(message, Optional.ofNullable(transferName)));
         }
         if (Config.playSound && result.containers > 0) {
             player.playNotifySound(SoundEvents.ITEM_PICKUP, SoundSource.PLAYERS, 1.0F, 1.0F);

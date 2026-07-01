@@ -1,16 +1,19 @@
 package com.cole.lootall.client;
 
 import com.cole.lootall.LootAll;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.client.event.RegisterGuiOverlaysEvent;
-import net.minecraftforge.client.gui.overlay.VanillaGuiOverlay;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod;
+import net.minecraft.resources.ResourceLocation;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.neoforge.client.event.RegisterGuiLayersEvent;
+import net.neoforged.neoforge.client.gui.VanillaGuiLayers;
 
-@Mod.EventBusSubscriber(modid = LootAll.MODID, value = Dist.CLIENT, bus = Mod.EventBusSubscriber.Bus.MOD)
+@EventBusSubscriber(modid = LootAll.MODID, value = Dist.CLIENT)
 public class ClientSetup {
     @SubscribeEvent
-    public static void registerOverlays(RegisterGuiOverlaysEvent event) {
-        event.registerAbove(VanillaGuiOverlay.HOTBAR.id(), "loot_transfer_feedback", TransferFeedback.OVERLAY);
+    public static void registerLayers(RegisterGuiLayersEvent event) {
+        event.registerAbove(VanillaGuiLayers.HOTBAR,
+                ResourceLocation.fromNamespaceAndPath(LootAll.MODID, "loot_transfer_feedback"),
+                TransferFeedback.OVERLAY);
     }
 }

@@ -20,11 +20,12 @@ import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.ChunkPos;
+import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
-import net.minecraftforge.common.capabilities.ForgeCapabilities;
-import net.minecraftforge.fml.ModList;
-import net.minecraftforge.items.IItemHandler;
-import net.minecraftforge.items.ItemHandlerHelper;
+import net.neoforged.fml.ModList;
+import net.neoforged.neoforge.capabilities.Capabilities;
+import net.neoforged.neoforge.items.IItemHandler;
+import net.neoforged.neoforge.items.ItemHandlerHelper;
 
 public class TransferService {
     private static final boolean RS = ModList.get().isLoaded("refinedstorage");
@@ -47,9 +48,6 @@ public class TransferService {
 
     public static ResolvedSink resolveSink(ServerPlayer player) {
         if (!Config.enableLootingTransfer) {
-            return null;
-        }
-        if (!StageGate.canTransfer(player)) {
             return null;
         }
         MinecraftServer server = player.getServer();
@@ -256,7 +254,7 @@ public class TransferService {
         for (int i = 0; i < inventory.getContainerSize(); i++) {
             ItemStack stack = inventory.getItem(i);
             if (!stack.isEmpty() && stack.getItem() == item) {
-                IItemHandler handler = stack.getCapability(ForgeCapabilities.ITEM_HANDLER).resolve().orElse(null);
+                IItemHandler handler = stack.getCapability(Capabilities.ItemHandler.ITEM);
                 if (handler != null) {
                     return handler;
                 }
@@ -266,12 +264,17 @@ public class TransferService {
     }
 
     public static IItemHandler findHandler(BlockEntity be) {
-        IItemHandler handler = be.getCapability(ForgeCapabilities.ITEM_HANDLER, null).resolve().orElse(null);
+        Level level = be.getLevel();
+        if (level == null) {
+            return null;
+        }
+        BlockPos pos = be.getBlockPos();
+        IItemHandler handler = level.getCapability(Capabilities.ItemHandler.BLOCK, pos, null);
         if (handler != null) {
             return handler;
         }
         for (Direction direction : Direction.values()) {
-            handler = be.getCapability(ForgeCapabilities.ITEM_HANDLER, direction).resolve().orElse(null);
+            handler = level.getCapability(Capabilities.ItemHandler.BLOCK, pos, direction);
             if (handler != null) {
                 return handler;
             }

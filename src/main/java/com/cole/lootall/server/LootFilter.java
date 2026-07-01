@@ -1,6 +1,7 @@
 package com.cole.lootall.server;
 
 import com.cole.lootall.Config;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.tags.TagKey;
@@ -15,7 +16,6 @@ import net.minecraft.world.item.ShearsItem;
 import net.minecraft.world.item.ShieldItem;
 import net.minecraft.world.item.TieredItem;
 import net.minecraft.world.item.TridentItem;
-import net.minecraftforge.registries.ForgeRegistries;
 
 import java.util.HashSet;
 import java.util.List;
@@ -83,7 +83,7 @@ public final class LootFilter {
             return false;
         }
 
-        ResourceLocation id = ForgeRegistries.ITEMS.getKey(stack.getItem());
+        ResourceLocation id = BuiltInRegistries.ITEM.getKey(stack.getItem());
         if (!(skipItems.isEmpty() && skipTags.isEmpty() && skipMods.isEmpty())) {
             boolean listed = matchesList(stack, id);
             if (Config.skipListMode == Config.ListMode.WHITELIST) {

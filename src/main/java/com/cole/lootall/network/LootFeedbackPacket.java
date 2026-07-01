@@ -1,43 +1,31 @@
 package com.cole.lootall.network;
 
+import com.cole.lootall.LootAll;
 import com.cole.lootall.client.TransferFeedback;
-import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.chat.Component;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.fml.DistExecutor;
-import net.minecraftforge.network.NetworkEvent;
+import net.minecraft.network.chat.ComponentSerialization;
+import net.minecraft.network.codec.StreamCodec;
+import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
+import net.minecraft.resources.ResourceLocation;
+import net.neoforged.neoforge.network.handling.IPayloadContext;
 
-import javax.annotation.Nullable;
-import java.util.function.Supplier;
+import java.util.Optional;
 
-public class LootFeedbackPacket {
-    private final Component message;
-    @Nullable
-    private final Component transfer;
+public record LootFeedbackPacket(Component message, Optional<Component> transfer) implements CustomPacketPayload {
+    public static final Type<LootFeedbackPacket> TYPE =
+            new Type<>(ResourceLocation.fromNamespaceAndPath(LootAll.MODID, "loot_feedback"));
+    public static final StreamCodec<RegistryFriendlyByteBuf, LootFeedbackPacket> CODEC = StreamCodec.composite(
+            ComponentSerialization.STREAM_CODEC, LootFeedbackPacket::message,
+            ComponentSerialization.OPTIONAL_STREAM_CODEC, LootFeedbackPacket::transfer,
+            LootFeedbackPacket::new);
 
-    public LootFeedbackPacket(Component message, @Nullable Component transfer) {
-        this.message = message;
-        this.transfer = transfer;
+    @Override
+    public Type<LootFeedbackPacket> type() {
+        return TYPE;
     }
 
-    public static void encode(LootFeedbackPacket msg, FriendlyByteBuf buf) {
-        buf.writeComponent(msg.message);
-        buf.writeBoolean(msg.transfer != null);
-        if (msg.transfer != null) {
-            buf.writeComponent(msg.transfer);
-        }
-    }
-
-    public static LootFeedbackPacket decode(FriendlyByteBuf buf) {
-        Component message = buf.readComponent();
-        Component transfer = buf.readBoolean() ? buf.readComponent() : null;
-        return new LootFeedbackPacket(message, transfer);
-    }
-
-    public static void handle(LootFeedbackPacket msg, Supplier<NetworkEvent.Context> ctx) {
-        NetworkEvent.Context context = ctx.get();
-        context.enqueueWork(() -> DistExecutor.unsafeRunWhenOn(Dist.CLIENT,
-                () -> () -> TransferFeedback.show(msg.message, msg.transfer)));
-        context.setPacketHandled(true);
+    public static void handle(LootFeedbackPacket msg, IPayloadContext ctx) {
+        TransferFeedback.show(msg.message, msg.transfer.orElse(null));
     }
 }

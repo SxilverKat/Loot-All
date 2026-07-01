@@ -1,7 +1,7 @@
 package com.cole.lootall.compat;
 
 import com.cole.lootall.server.TransferService;
-import com.tom.storagemod.tile.StorageTerminalBlockEntity;
+import com.tom.storagemod.block.entity.StorageTerminalBlockEntity;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.item.ItemStack;
