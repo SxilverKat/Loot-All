@@ -1,0 +1,14 @@
+{
+  "required": true,
+  "minVersion": "0.8",
+  "package": "com.sxilverr.lootall.fabric.mixin",
+  "mixins": [
+    "RandomizableContainerAccessor"
+  ],
+  "client": [
+    "AbstractContainerScreenAccessor"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}

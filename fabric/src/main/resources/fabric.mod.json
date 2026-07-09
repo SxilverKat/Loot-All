@@ -1,0 +1,29 @@
+{
+  "schemaVersion": 1,
+  "id": "${id}",
+  "version": "${version}",
+  "name": "${name}",
+  "description": "Looting made easy.",
+  "authors": ["Sxilverr"],
+  "contact": {
+    "issues": "https://www.curseforge.com/minecraft/mc-mods/loot-all"
+  },
+  "license": "MIT",
+  "icon": "icon.png",
+  "environment": "*",
+  "entrypoints": {
+    "main": ["com.sxilverr.lootall.fabric.LootAllFabric"],
+    "client": ["com.sxilverr.lootall.fabric.LootAllFabricClient"],
+    "modmenu": ["com.sxilverr.lootall.fabric.ModMenuIntegration"]
+  },
+  "mixins": ["lootall.mixins.json"],
+  "depends": {
+    "fabricloader": ">=0.15.0",
+    "fabric-api": "*",
+    "minecraft": "${minecraft}"
+  },
+  "suggests": {
+    "modmenu": "*",
+    "cloth-config": "*"
+  }
+}
