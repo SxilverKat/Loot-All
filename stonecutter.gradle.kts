@@ -26,6 +26,11 @@ for (it in stonecutter.tree.branches) {
         versions { branch, _ -> branch == it.id }
         ofTask("buildAndCollect")
     }
+    stonecutter registerChiseled tasks.register("chiseledPublish$loader", stonecutter.chiseled) {
+        group = "project"
+        versions { branch, _ -> branch == it.id }
+        ofTask("publishMod")
+    }
 }
 
 for (it in stonecutter.tree.nodes) {

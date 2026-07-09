@@ -6,14 +6,16 @@ This project can upload **every loader/version jar at once** to both Modrinth an
 ./gradlew chiseledPublish
 ```
 
-That builds all nodes (forge/1.20.1, neoforge/1.21.1, fabric/1.21.1) and uploads each to both platforms,
-tagged with the right Minecraft version + loader. Under the hood: **Minotaur** (`com.modrinth.minotaur`) for
-Modrinth and **CurseForgeGradle** (`net.darkhax.curseforgegradle`) for CurseForge.
+That builds all nodes (forge/1.20.1, neoforge/1.21.1, fabric/1.20.1, fabric/1.21.1) and uploads each to both
+platforms, tagged with the right Minecraft version, loader, Java version, and environment. Under the hood:
+**Minotaur** (`com.modrinth.minotaur`) for Modrinth and **CurseForgeGradle** (`net.darkhax.curseforgegradle`)
+for CurseForge.
 
 ## Task cheat-sheet
 | Task | Does |
 |---|---|
 | `chiseledPublish` | build + publish **every** node to **both** platforms |
+| `chiseledPublishFabric` | build + publish **only the Fabric** nodes (1.20.1 + 1.21.1); also `chiseledPublishForge`, `chiseledPublishNeoforge` |
 | `<node>:publishMod` | publish one node to both (e.g. `:neoforge:publishMod`) |
 | `<node>:modrinth` | one node → Modrinth only |
 | `<node>:publishCurseForge` | one node → CurseForge only |
@@ -62,4 +64,5 @@ Running `chiseledPublish` with tokens + IDs set makes **real, public releases**.
 ## Notes
 - `versionType` is `release`; change per loader block if you want beta/alpha.
 - `detectLoaders` is off so each jar is tagged with exactly its one loader + MC version.
+- Each CurseForge file is tagged with its Minecraft version, loader, **Java version** (17 for 1.20.1, 21 for 1.21.1), and **environment** (Client + Server). Release type is `release`.
 - The uploaded file is Loom's **remapJar** (the production jar), not the dev jar — correct by design.
