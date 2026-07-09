@@ -161,6 +161,8 @@ tasks.register<net.darkhax.curseforgegradle.TaskPublishCurseForge>("publishCurse
             "neoforge" -> "NeoForge"
             else -> loader.replaceFirstChar { it.uppercase() }
         })
+        mainFile.addJavaVersion(if (stonecutter.eval(minecraft, ">=1.20.5")) "Java 21" else "Java 17")
+        mainFile.addGameVersion("Client", "Server")
     }
 }
 

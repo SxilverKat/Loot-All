@@ -150,7 +150,6 @@ tasks.register<net.darkhax.curseforgegradle.TaskPublishCurseForge>("publishCurse
         mainFile.changelogType = "markdown"
         val changelogFile = rootProject.file("CHANGELOG.md")
         mainFile.changelog = if (changelogFile.exists()) changelogFile.readText() else "No changelog provided."
-        mainFile.displayName = "${mod.name} ${mod.version} ($loader $minecraft)"
         mainFile.addGameVersion(minecraft)
         mainFile.addModLoader(when (loader) {
             "fabric" -> "Fabric"
