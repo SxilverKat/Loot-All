@@ -1,10 +1,19 @@
 package com.sxilverr.lootall.core;
 
 import com.sxilverr.lootall.config.LootConfig;
+//? if >=1.20 {
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
+//?} else {
+/*import net.minecraft.core.Registry;*/
+//?}
 import net.minecraft.resources.ResourceLocation;
+//? if >=1.18 {
 import net.minecraft.tags.TagKey;
+//?} else {
+/*import net.minecraft.tags.SerializationTags;
+import net.minecraft.tags.Tag;*/
+//?}
 import net.minecraft.world.item.ArmorItem;
 import net.minecraft.world.item.BowItem;
 import net.minecraft.world.item.CrossbowItem;
@@ -17,23 +26,24 @@ import net.minecraft.world.item.ShieldItem;
 import net.minecraft.world.item.TieredItem;
 import net.minecraft.world.item.TridentItem;
 
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Set;
 
 public final class LootFilter {
-    private static Set<ResourceLocation> skipItems = Set.of();
-    private static Set<TagKey<Item>> skipTags = Set.of();
-    private static Set<String> skipMods = Set.of();
-    private static Set<String> rarityNames = Set.of();
+    private static Set<ResourceLocation> skipItems = Collections.emptySet();
+    private static Set<ResourceLocation> skipTags = Collections.emptySet();
+    private static Set<String> skipMods = Collections.emptySet();
+    private static Set<String> rarityNames = Collections.emptySet();
 
     private LootFilter() {
     }
 
     public static void rebuild(List<? extends String> skipList, List<? extends String> rarityList) {
         Set<ResourceLocation> items = new HashSet<>();
-        Set<TagKey<Item>> tags = new HashSet<>();
+        Set<ResourceLocation> tags = new HashSet<>();
         Set<String> mods = new HashSet<>();
         for (String raw : skipList) {
             if (raw == null) {
@@ -51,7 +61,7 @@ public final class LootFilter {
             } else if (entry.startsWith("#")) {
                 ResourceLocation rl = ResourceLocation.tryParse(entry.substring(1).trim());
                 if (rl != null) {
-                    tags.add(TagKey.create(Registries.ITEM, rl));
+                    tags.add(rl);
                 }
             } else {
                 ResourceLocation rl = ResourceLocation.tryParse(entry);
@@ -83,7 +93,11 @@ public final class LootFilter {
             return false;
         }
 
+        //? if >=1.20 {
         ResourceLocation id = BuiltInRegistries.ITEM.getKey(stack.getItem());
+        //?} else {
+        /*ResourceLocation id = Registry.ITEM.getKey(stack.getItem());*/
+        //?}
         if (!(skipItems.isEmpty() && skipTags.isEmpty() && skipMods.isEmpty())) {
             boolean listed = matchesList(stack, id);
             if (LootConfig.skipListMode == LootConfig.ListMode.WHITELIST) {
@@ -131,10 +145,21 @@ public final class LootFilter {
                 return true;
             }
         }
-        for (TagKey<Item> tag : skipTags) {
-            if (stack.is(tag)) {
+        for (ResourceLocation tagId : skipTags) {
+            //? if >=1.20 {
+            if (stack.is(TagKey.create(Registries.ITEM, tagId))) {
                 return true;
             }
+            //?} else if >=1.18 {
+            /*if (stack.is(TagKey.create(Registry.ITEM_REGISTRY, tagId))) {
+                return true;
+            }
+            *///?} else {
+            /*Tag<Item> tag = SerializationTags.getInstance().getItems().getTagOrEmpty(tagId);
+            if (tag.contains(stack.getItem())) {
+                return true;
+            }
+            *///?}
         }
         return false;
     }

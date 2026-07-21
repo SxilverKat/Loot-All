@@ -1,6 +1,8 @@
 package com.sxilverr.lootall.server;
 import com.sxilverr.lootall.core.LootFilter;
 
+import com.sxilverr.lootall.Compat;
+import com.sxilverr.lootall.Text;
 import com.sxilverr.lootall.config.LootConfig;
 
 import com.sxilverr.lootall.compat.LootrCompat;
@@ -22,7 +24,11 @@ import net.minecraft.world.level.chunk.LevelChunk;
 import net.minecraft.world.phys.AABB;
 import net.minecraftforge.fml.ModList;
 import net.minecraftforge.items.ItemHandlerHelper;
+//? if >=1.17 {
 import net.minecraftforge.network.PacketDistributor;
+//?} else {
+/*import net.minecraftforge.fml.network.PacketDistributor;*/
+//?}
 
 import java.util.ArrayList;
 import java.util.List;
@@ -38,7 +44,7 @@ public class LootAllHandler {
     }
 
     public static void lootAll(ServerPlayer player, boolean auto) {
-        ServerLevel level = (ServerLevel) player.level();
+        ServerLevel level = (ServerLevel) Compat.level(player);
         int range = LootConfig.range;
         double rangeSq = (double) range * range;
 
@@ -93,7 +99,9 @@ public class LootAllHandler {
                     result.items += looted;
                     result.containers++;
                 }
-            } else if (be instanceof RandomizableContainerBlockEntity rc && rc.lootTable != null) {
+            } else if (be instanceof RandomizableContainerBlockEntity
+                    && ((RandomizableContainerBlockEntity) be).lootTable != null) {
+                RandomizableContainerBlockEntity rc = (RandomizableContainerBlockEntity) be;
                 rc.unpackLootTable(player);
                 result.items += drain(player, rc);
                 rc.setChanged();
@@ -115,12 +123,21 @@ public class LootAllHandler {
                     result.items += looted;
                     result.containers++;
                 }
+            //? if >=1.19 {
             } else if (cart.getLootTable() != null) {
                 cart.unpackChestVehicleLootTable(player);
                 result.items += drain(player, cart);
                 cart.setChanged();
                 result.containers++;
             }
+            //?} else {
+            /*} else if (cart.lootTable != null) {
+                cart.unpackLootTable(player);
+                result.items += drain(player, cart);
+                cart.setChanged();
+                result.containers++;
+            }*/
+            //?}
         }
     }
 
@@ -162,13 +179,13 @@ public class LootAllHandler {
         if (LootConfig.feedbackMessage && !(auto && result.containers == 0)) {
             Component message;
             if (result.containers == 0) {
-                message = Component.translatable("message.lootall.nothing");
+                message = Text.translatable("message.lootall.nothing");
             } else {
-                Component itemWord = Component.translatable(
+                Component itemWord = Text.translatable(
                         result.items == 1 ? "message.lootall.item" : "message.lootall.items");
-                Component containerWord = Component.translatable(
+                Component containerWord = Text.translatable(
                         result.containers == 1 ? "message.lootall.container" : "message.lootall.containers");
-                message = Component.translatable("message.lootall.looted",
+                message = Text.translatable("message.lootall.looted",
                         result.items, itemWord, result.containers, containerWord);
             }
             LootAllNetwork.CHANNEL.send(PacketDistributor.PLAYER.with(() -> player),

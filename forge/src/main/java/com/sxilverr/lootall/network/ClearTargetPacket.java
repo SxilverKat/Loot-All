@@ -1,11 +1,15 @@
 package com.sxilverr.lootall.network;
 
+import com.sxilverr.lootall.Text;
 import com.sxilverr.lootall.core.TransferData;
 import net.minecraft.network.FriendlyByteBuf;
-import net.minecraft.network.chat.Component;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
+//? if >=1.17 {
 import net.minecraftforge.network.NetworkEvent;
+//?} else {
+/*import net.minecraftforge.fml.network.NetworkEvent;*/
+//?}
 
 import java.util.function.Supplier;
 
@@ -32,7 +36,7 @@ public class ClearTargetPacket {
                 return;
             }
             TransferData.get(server).clear(player.getUUID());
-            player.displayClientMessage(Component.translatable("message.lootall.target_cleared"), true);
+            player.displayClientMessage(Text.translatable("message.lootall.target_cleared"), true);
         });
         context.setPacketHandled(true);
     }

@@ -5,7 +5,11 @@ import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.Component;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.fml.DistExecutor;
+//? if >=1.17 {
 import net.minecraftforge.network.NetworkEvent;
+//?} else {
+/*import net.minecraftforge.fml.network.NetworkEvent;*/
+//?}
 
 import javax.annotation.Nullable;
 import java.util.function.Supplier;

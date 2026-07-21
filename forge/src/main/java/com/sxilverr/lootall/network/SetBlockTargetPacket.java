@@ -1,5 +1,7 @@
 package com.sxilverr.lootall.network;
 
+import com.sxilverr.lootall.Compat;
+import com.sxilverr.lootall.Text;
 import com.sxilverr.lootall.server.StageGate;
 import com.sxilverr.lootall.core.TransferData;
 import com.sxilverr.lootall.server.TransferService;
@@ -9,7 +11,11 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+//? if >=1.17 {
 import net.minecraftforge.network.NetworkEvent;
+//?} else {
+/*import net.minecraftforge.fml.network.NetworkEvent;*/
+//?}
 
 import java.util.function.Supplier;
 
@@ -40,16 +46,16 @@ public class SetBlockTargetPacket {
                 return;
             }
             if (!StageGate.canTransfer(player)) {
-                player.displayClientMessage(Component.translatable("message.lootall.no_stage"), true);
+                player.displayClientMessage(Text.translatable("message.lootall.no_stage"), true);
                 return;
             }
-            if (!TransferService.canTargetBlock((ServerLevel) player.level(), msg.pos)) {
-                player.displayClientMessage(Component.translatable("message.lootall.target_invalid"), true);
+            if (!TransferService.canTargetBlock((ServerLevel) Compat.level(player), msg.pos)) {
+                player.displayClientMessage(Text.translatable("message.lootall.target_invalid"), true);
                 return;
             }
-            TransferData.get(server).setBlockTarget(player.getUUID(), player.level().dimension(), msg.pos);
-            Component name = player.level().getBlockState(msg.pos).getBlock().getName();
-            player.displayClientMessage(Component.translatable(
+            TransferData.get(server).setBlockTarget(player.getUUID(), Compat.level(player).dimension(), msg.pos);
+            Component name = Compat.level(player).getBlockState(msg.pos).getBlock().getName();
+            player.displayClientMessage(Text.translatable(
                     "message.lootall.target_set", name, msg.pos.getX(), msg.pos.getY(), msg.pos.getZ()), true);
         });
         context.setPacketHandled(true);

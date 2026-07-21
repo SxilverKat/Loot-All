@@ -8,7 +8,11 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
+//? if >=1.17 {
 import net.minecraftforge.server.ServerLifecycleHooks;
+//?} else {
+/*import net.minecraftforge.fml.server.ServerLifecycleHooks;*/
+//?}
 
 @Mod.EventBusSubscriber(modid = Config.MOD_ID)
 public class ServerEvents {

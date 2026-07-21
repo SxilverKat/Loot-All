@@ -1,11 +1,15 @@
 package com.sxilverr.lootall.network;
 
+import com.sxilverr.lootall.Text;
 import com.sxilverr.lootall.server.LootAllHandler;
 import com.sxilverr.lootall.server.StageGate;
 import net.minecraft.network.FriendlyByteBuf;
-import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
+//? if >=1.17 {
 import net.minecraftforge.network.NetworkEvent;
+//?} else {
+/*import net.minecraftforge.fml.network.NetworkEvent;*/
+//?}
 
 import java.util.function.Supplier;
 
@@ -26,7 +30,7 @@ public class LootAllPacket {
             ServerPlayer player = context.getSender();
             if (player != null) {
                 if (!StageGate.canLootAll(player)) {
-                    player.displayClientMessage(Component.translatable("message.lootall.no_stage"), true);
+                    player.displayClientMessage(Text.translatable("message.lootall.no_stage"), true);
                     return;
                 }
                 LootAllHandler.lootAll(player);

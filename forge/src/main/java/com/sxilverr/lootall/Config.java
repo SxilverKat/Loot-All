@@ -6,8 +6,13 @@ import net.minecraftforge.common.ForgeConfigSpec;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.ModList;
 import net.minecraftforge.fml.common.Mod;
+//? if >=1.17 {
 import net.minecraftforge.fml.event.config.ModConfigEvent;
+//?} else {
+/*import net.minecraftforge.fml.config.ModConfig;*/
+//?}
 
+import java.util.Collections;
 import java.util.List;
 
 @Mod.EventBusSubscriber(modid = Config.MOD_ID, bus = Mod.EventBusSubscriber.Bus.MOD)
@@ -75,7 +80,7 @@ public final class Config {
         SKIP_LIST = BUILDER
                 .comment("Items the skipList filter works from (see skipListMode).",
                         "Formats: 'modid:item', '#modid:tag', '@modid'")
-                .defineListAllowEmpty(List.of("skipList"), () -> List.of(), Config::isValidListEntry);
+                .defineListAllowEmpty(Collections.singletonList("skipList"), () -> Collections.emptyList(), Config::isValidListEntry);
         SKIP_LIST_MODE = BUILDER
                 .comment("How the skipList is used:",
                         "  BLACKLIST = loot everything EXCEPT what is listed.",
@@ -100,12 +105,12 @@ public final class Config {
         RARITY_LIST = BUILDER
                 .comment("Rarity tiers for the filter. Vanilla: COMMON, UNCOMMON, RARE, EPIC.",
                         "Note: enchanting an item raises its rarity in vanilla.")
-                .defineListAllowEmpty(List.of("rarityList"), () -> List.of(), Config::isValidListEntry);
+                .defineListAllowEmpty(Collections.singletonList("rarityList"), () -> Collections.emptyList(), Config::isValidListEntry);
         BUILDER.pop();
     }
 
     private static boolean isValidListEntry(Object o) {
-        return o instanceof String s && !s.isBlank();
+        return o instanceof String && !((String) o).trim().isEmpty();
     }
 
     private static final ForgeConfigSpec.ConfigValue<String> LOOT_ALL_STAGE;
@@ -144,7 +149,7 @@ public final class Config {
     }
 
     @SubscribeEvent
-    static void onLoad(final ModConfigEvent event) {
+    static void onLoad(final /*? if >=1.17 {*/ModConfigEvent/*?} else {*//*ModConfig.ModConfigEvent*//*?}*/ event) {
         LootConfig.range = RANGE.get();
         LootConfig.includeMinecarts = INCLUDE_MINECARTS.get();
         LootConfig.feedbackMessage = FEEDBACK_MESSAGE.get();

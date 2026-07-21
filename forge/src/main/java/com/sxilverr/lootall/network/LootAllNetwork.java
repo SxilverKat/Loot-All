@@ -3,9 +3,15 @@ package com.sxilverr.lootall.network;
 import com.sxilverr.lootall.Config;
 
 import net.minecraft.resources.ResourceLocation;
+//? if >=1.17 {
 import net.minecraftforge.network.NetworkDirection;
 import net.minecraftforge.network.NetworkRegistry;
 import net.minecraftforge.network.simple.SimpleChannel;
+//?} else {
+/*import net.minecraftforge.fml.network.NetworkDirection;
+import net.minecraftforge.fml.network.NetworkRegistry;
+import net.minecraftforge.fml.network.simple.SimpleChannel;*/
+//?}
 
 import java.util.Optional;
 
@@ -13,7 +19,7 @@ public class LootAllNetwork {
     private static final String PROTOCOL = "1";
 
     public static final SimpleChannel CHANNEL = NetworkRegistry.newSimpleChannel(
-            ResourceLocation.fromNamespaceAndPath(Config.MOD_ID, "main"),
+            new ResourceLocation(Config.MOD_ID, "main"),
             () -> PROTOCOL,
             PROTOCOL::equals,
             PROTOCOL::equals);

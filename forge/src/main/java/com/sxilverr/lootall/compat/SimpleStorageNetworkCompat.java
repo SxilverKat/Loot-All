@@ -37,10 +37,11 @@ public class SimpleStorageNetworkCompat {
 
     private static TileMain resolveMaster(ServerLevel level, BlockPos pos) {
         BlockEntity be = level.getBlockEntity(pos);
-        if (be instanceof TileMain master) {
-            return master;
+        if (be instanceof TileMain) {
+            return (TileMain) be;
         }
-        if (be instanceof TileConnectable connectable) {
+        if (be instanceof TileConnectable) {
+            TileConnectable connectable = (TileConnectable) be;
             DimPos mainPos = connectable.getMain();
             if (mainPos != null) {
                 try {

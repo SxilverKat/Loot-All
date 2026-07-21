@@ -5,7 +5,15 @@ import com.sxilverr.lootall.Config;
 import com.mojang.blaze3d.platform.InputConstants;
 import net.minecraft.client.KeyMapping;
 import net.minecraftforge.api.distmarker.Dist;
+//? if >=1.19 {
 import net.minecraftforge.client.event.RegisterKeyMappingsEvent;
+//?} else if >=1.17 {
+/*import net.minecraftforge.client.ClientRegistry;
+import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;*/
+//?} else {
+/*import net.minecraftforge.fml.client.registry.ClientRegistry;
+import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;*/
+//?}
 import net.minecraftforge.client.settings.KeyConflictContext;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
@@ -27,6 +35,7 @@ public class KeyBindings {
             GLFW.GLFW_KEY_EQUAL,
             "key.categories.lootall");
 
+    //? if >=1.19 {
     @SubscribeEvent
     public static void onRegisterKeyMappings(RegisterKeyMappingsEvent event) {
         event.register(LOOT_ALL);
@@ -34,4 +43,15 @@ public class KeyBindings {
             event.register(SET_TRANSFER_TARGET);
         }
     }
+    //?} else {
+    /*@SubscribeEvent
+    public static void onClientSetup(FMLClientSetupEvent event) {
+        event.enqueueWork(() -> {
+            ClientRegistry.registerKeyBinding(LOOT_ALL);
+            if (Config.transferEnabledForRegistration()) {
+                ClientRegistry.registerKeyBinding(SET_TRANSFER_TARGET);
+            }
+        });
+    }
+    *///?}
 }

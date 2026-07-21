@@ -21,7 +21,7 @@ public class StageGate {
     }
 
     private static boolean meets(ServerPlayer player, String stage) {
-        if (stage == null || stage.isBlank()) {
+        if (stage == null || stage.trim().isEmpty()) {
             return true;
         }
         if (!GS) {

@@ -1,6 +1,8 @@
 package com.sxilverr.lootall.server;
 import com.sxilverr.lootall.core.TransferData;
 
+import com.sxilverr.lootall.Compat;
+import com.sxilverr.lootall.Text;
 import com.sxilverr.lootall.config.LootConfig;
 
 import com.sxilverr.lootall.compat.AppliedEnergisticsCompat;
@@ -23,7 +25,6 @@ import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.block.entity.BlockEntity;
-import net.minecraftforge.common.capabilities.ForgeCapabilities;
 import net.minecraftforge.fml.ModList;
 import net.minecraftforge.items.IItemHandler;
 import net.minecraftforge.items.ItemHandlerHelper;
@@ -41,9 +42,31 @@ public class TransferService {
         ItemStack insert(ItemStack stack);
     }
 
-    public record ResolvedSink(LootSink sink, Component name, Runnable onComplete) {
+    public static final class ResolvedSink {
+        private final LootSink sink;
+        private final Component name;
+        private final Runnable onComplete;
+
+        public ResolvedSink(LootSink sink, Component name, Runnable onComplete) {
+            this.sink = sink;
+            this.name = name;
+            this.onComplete = onComplete;
+        }
+
         public ResolvedSink(LootSink sink, Component name) {
             this(sink, name, null);
+        }
+
+        public LootSink sink() {
+            return sink;
+        }
+
+        public Component name() {
+            return name;
+        }
+
+        public Runnable onComplete() {
+            return onComplete;
         }
     }
 
@@ -59,17 +82,19 @@ public class TransferService {
             return null;
         }
         TransferData.Target target = TransferData.get(server).getTarget(player.getUUID());
-        if (target instanceof TransferData.ItemTarget itemTarget) {
+        if (target instanceof TransferData.ItemTarget) {
+            TransferData.ItemTarget itemTarget = (TransferData.ItemTarget) target;
             return resolveItemSink(player, ForgeRegistries.ITEMS.getValue(itemTarget.item()));
         }
-        if (!(target instanceof TransferData.BlockTarget block)) {
+        if (!(target instanceof TransferData.BlockTarget)) {
             return null;
         }
+        TransferData.BlockTarget block = (TransferData.BlockTarget) target;
         ServerLevel targetLevel = server.getLevel(block.dimension());
         if (targetLevel == null) {
             return null;
         }
-        boolean sameDimension = targetLevel.dimension() == player.level().dimension();
+        boolean sameDimension = targetLevel.dimension() == Compat.level(player).dimension();
         if (LootConfig.transferRequireSameDimension && !sameDimension) {
             return null;
         }
@@ -101,7 +126,7 @@ public class TransferService {
         if (AE2) {
             LootSink ae2Sink = AppliedEnergisticsCompat.blockSink(targetLevel, pos, player);
             if (ae2Sink != null) {
-                return new ResolvedSink(ae2Sink, Component.translatable("name.lootall.me_network"));
+                return new ResolvedSink(ae2Sink, Text.translatable("name.lootall.me_network"));
             }
         }
         if (MEK) {
@@ -243,7 +268,7 @@ public class TransferService {
     }
 
     private static ItemStack findPlayerStack(ServerPlayer player, Item item) {
-        Inventory inventory = player.getInventory();
+        Inventory inventory = Compat.inventory(player);
         for (int i = 0; i < inventory.getContainerSize(); i++) {
             ItemStack stack = inventory.getItem(i);
             if (!stack.isEmpty() && stack.getItem() == item) {
@@ -254,11 +279,11 @@ public class TransferService {
     }
 
     private static IItemHandler inventoryItemHandler(ServerPlayer player, Item item) {
-        Inventory inventory = player.getInventory();
+        Inventory inventory = Compat.inventory(player);
         for (int i = 0; i < inventory.getContainerSize(); i++) {
             ItemStack stack = inventory.getItem(i);
             if (!stack.isEmpty() && stack.getItem() == item) {
-                IItemHandler handler = stack.getCapability(ForgeCapabilities.ITEM_HANDLER).resolve().orElse(null);
+                IItemHandler handler = stack.getCapability(Compat.itemHandlerCap()).resolve().orElse(null);
                 if (handler != null) {
                     return handler;
                 }
@@ -268,12 +293,12 @@ public class TransferService {
     }
 
     public static IItemHandler findHandler(BlockEntity be) {
-        IItemHandler handler = be.getCapability(ForgeCapabilities.ITEM_HANDLER, null).resolve().orElse(null);
+        IItemHandler handler = be.getCapability(Compat.itemHandlerCap(), null).resolve().orElse(null);
         if (handler != null) {
             return handler;
         }
         for (Direction direction : Direction.values()) {
-            handler = be.getCapability(ForgeCapabilities.ITEM_HANDLER, direction).resolve().orElse(null);
+            handler = be.getCapability(Compat.itemHandlerCap(), direction).resolve().orElse(null);
             if (handler != null) {
                 return handler;
             }

@@ -4,7 +4,7 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
-import net.minecraftforge.common.capabilities.ForgeCapabilities;
+import com.sxilverr.lootall.Compat;
 import net.minecraftforge.items.IItemHandler;
 
 import java.lang.reflect.Method;
@@ -27,7 +27,7 @@ public class CuriosCompat {
                 getCuriosInventory = api.getMethod("getCuriosInventory", LivingEntity.class);
             }
             Optional<?> inventory = toOptional(getCuriosInventory.invoke(null, player));
-            if (inventory.isEmpty()) {
+            if (!inventory.isPresent()) {
                 return null;
             }
             Object curiosInventory = inventory.get();
@@ -35,21 +35,23 @@ public class CuriosCompat {
                 getCurios = curiosInventory.getClass().getMethod("getCurios");
             }
             Object curios = getCurios.invoke(curiosInventory);
-            if (!(curios instanceof Map<?, ?> stacksByType)) {
+            if (!(curios instanceof Map)) {
                 return null;
             }
+            Map<?, ?> stacksByType = (Map<?, ?>) curios;
             for (Object stacksHandler : stacksByType.values()) {
                 if (getStacks == null) {
                     getStacks = stacksHandler.getClass().getMethod("getStacks");
                 }
                 Object stacksObject = getStacks.invoke(stacksHandler);
-                if (!(stacksObject instanceof IItemHandler stacks)) {
+                if (!(stacksObject instanceof IItemHandler)) {
                     continue;
                 }
+                IItemHandler stacks = (IItemHandler) stacksObject;
                 for (int i = 0; i < stacks.getSlots(); i++) {
                     ItemStack stack = stacks.getStackInSlot(i);
                     if (!stack.isEmpty() && stack.getItem() == item) {
-                        IItemHandler handler = stack.getCapability(ForgeCapabilities.ITEM_HANDLER).resolve().orElse(null);
+                        IItemHandler handler = stack.getCapability(Compat.itemHandlerCap()).resolve().orElse(null);
                         if (handler != null) {
                             return handler;
                         }
@@ -64,13 +66,13 @@ public class CuriosCompat {
     }
 
     private static Optional<?> toOptional(Object value) {
-        if (value instanceof Optional<?> optional) {
-            return optional;
+        if (value instanceof Optional) {
+            return (Optional<?>) value;
         }
         try {
             Object resolved = value.getClass().getMethod("resolve").invoke(value);
-            if (resolved instanceof Optional<?> optional) {
-                return optional;
+            if (resolved instanceof Optional) {
+                return (Optional<?>) resolved;
             }
         } catch (Throwable ignored) {
         }

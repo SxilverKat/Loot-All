@@ -27,9 +27,10 @@ public class RefinedStorageCompat {
     }
 
     public static TransferService.LootSink itemSink(ServerPlayer player, ItemStack stack) {
-        if (!(stack.getItem() instanceof NetworkItem networkItem) || !NetworkItem.isValid(stack)) {
+        if (!(stack.getItem() instanceof NetworkItem) || !NetworkItem.isValid(stack)) {
             return null;
         }
+        NetworkItem networkItem = (NetworkItem) stack.getItem();
         MinecraftServer server = player.getServer();
         if (server == null) {
             return null;
